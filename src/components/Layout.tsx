@@ -1,114 +1,122 @@
-import React, { useState } from "react";
-import { Layout as AntLayout, Menu, Breadcrumb, theme } from "antd";
-import {
-  DesktopOutlined,
-  FileOutlined,
-  PieChartOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import type { MenuProps } from "antd";
-import { useNavigate, Outlet } from "react-router-dom";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { createTheme } from "@mui/material/styles";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import { AppProvider, type Navigation } from "@toolpad/core/AppProvider";
+import { DashboardLayout } from "@toolpad/core/DashboardLayout";
+import { useDemoRouter } from "@toolpad/core/internal";
+import EmprendePlusLogo from "./Logos/EmprendePlusLogo";
+import { WelcomeMessage } from "./WelcomeMessage";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const { Header, Content, Footer, Sider } = AntLayout;
+const NAVIGATION: Navigation = [
+  {
+    segment: "dashboard",
+    title: "Dashboard",
+    icon: <DashboardIcon />,
+    action: () => handleNavigation("dashboard"),
+  },
+  {
+    segment: "orders",
+    title: "Orders",
+    icon: <ShoppingCartIcon />,
+    action: () => handleNavigation("orders"),
+  },
+];
 
-type MenuItem = Required<MenuProps>["items"][number];
+const demoTheme = createTheme({
+  cssVariables: {
+    colorSchemeSelector: "data-toolpad-color-scheme",
+  },
+  colorSchemes: { light: true, dark: true },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 600,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
+});
 
-function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[]
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-  } as MenuItem;
-}
-
-const Layout: React.FC<{}> = ({}) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState("1");
-  const navigate = useNavigate();
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
-
-  const handleMenuClick = ({ key }: { key: string }) => {
-    setSelectedKey(key);
-    switch (key) {
-      case "1":
-        navigate("/");
-        break;
-      case "2":
-        navigate("/login");
-        break;
-      case "3":
-        navigate("/register");
-        break;
+function DemoPageContent({ pathname }: { pathname: string }) {
+  const renderContent = () => {
+    switch (pathname) {
+      case "/dashboard":
+        return <Typography>Bienvenido al Dashboard</Typography>;
+      case "/orders":
+        return <Typography>Gestión de Órdenes</Typography>;
       default:
-        break;
+        return <Typography>Página no encontrada</Typography>;
     }
   };
 
-  const items: MenuItem[] = [
-    getItem("Home", "1", <PieChartOutlined />),
-    getItem("Login", "2", <DesktopOutlined />),
-    getItem("Register", "3", <FileOutlined />),
-    getItem("User", "sub1", <UserOutlined />, [
-      getItem("Tom", "4"),
-      getItem("Bill", "5"),
-      getItem("Alex", "6"),
-    ]),
-    getItem("Team", "sub2", <TeamOutlined />, [
-      getItem("Team 1", "7"),
-      getItem("Team 2", "8"),
-    ]),
-    getItem("Files", "9", <FileOutlined />),
-  ];
+  return (
+    <Box
+      sx={{
+        py: 4,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+      }}
+    >
+      {renderContent()}
+      <WelcomeMessage />
+    </Box>
+  );
+}
+
+export default function DashboardLayoutBranding() {
+  const router = useDemoRouter("/dashboard");
+  const navigate = useNavigate();
+  const [currentPath, setCurrentPath] = useState(router.pathname);
+
+  const handleNavigation = (segment: string) => {
+    const newPath = `/${segment}`;
+    setCurrentPath(newPath);
+    navigate(newPath);
+  };
+
+  const renderLayout = () => {
+    switch (currentPath) {
+      case "/dashboard":
+        return (
+          <DashboardLayout>
+            {" "}
+            <DemoPageContent pathname={currentPath} />{" "}
+          </DashboardLayout>
+        );
+      case "/orders":
+        return (
+          <Box>
+            {" "}
+            <DemoPageContent pathname={currentPath} />{" "}
+          </Box>
+        );
+      default:
+        return <Typography>Página no encontrada</Typography>;
+    }
+  };
 
   return (
-    <AntLayout style={{ minHeight: "100vh" }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-      >
-        <div className="demo-logo-vertical" />
-        <Menu
-          theme="dark"
-          selectedKeys={[selectedKey]}
-          mode="inline"
-          items={items}
-          onClick={handleMenuClick}
-        />
-      </Sider>
-      <AntLayout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
-        <Content style={{ margin: "0 16px" }}>
-          <Breadcrumb style={{ margin: "16px 0" }}>
-            <Breadcrumb.Item>User</Breadcrumb.Item>
-            <Breadcrumb.Item>Bill</Breadcrumb.Item>
-          </Breadcrumb>
-          <div
-            style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            <Outlet /> {/* Render nested routes here */}
-          </div>
-        </Content>
-        <Footer style={{ textAlign: "center" }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
-        </Footer>
-      </AntLayout>
-    </AntLayout>
+    <AppProvider
+      navigation={NAVIGATION.map((navItem) => ({
+      ...navItem,
+      onClick: navItem.onClick,
+      }))}
+      branding={{
+      logo: <EmprendePlusLogo />,
+      title: "Emprende+",
+      homeUrl: "/",
+      }}
+      router={router}
+      theme={demoTheme}
+    >
+      {renderLayout()}
+    </AppProvider>
   );
-};
-
-export default Layout;
+}

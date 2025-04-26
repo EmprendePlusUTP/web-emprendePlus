@@ -1,29 +1,48 @@
-import { LockOutlined, MobileOutlined, UserOutlined } from "@ant-design/icons";
-import {
-  LoginFormPage,
-  ProConfigProvider,
-  ProFormCaptcha,
-  ProFormCheckbox,
-  ProFormText,
-} from "@ant-design/pro-components";
-import { Divider, Space, Tabs, message, theme } from "antd";
-import { useState } from "react";
-import FormLogo from "../../components/Logos/FormLogo";
+import { AppProvider } from "@toolpad/core/AppProvider";
+import { SignInPage, type AuthProvider } from "@toolpad/core/SignInPage";
+import { useTheme } from "@mui/material/styles";
 import BgVideo from "../../assets/LoginVideo.mp4";
-import "./Login.css";
+import EmprendePlusLogo from "../../components/Logos/EmprendePlusLogo";
 import UTPLogo from "../../components/Logos/UTPLogo";
 import FiscLogo from "../../components/Logos/FiscLogo";
-import MicrosoftLogo from "../../components/Logos/MicrosoftLogo";
 
-type LoginType = "phone" | "account";
+const BRANDING = {
+  logo: (
+    <div className="text-blue-500 z-10 w-20">
+      <EmprendePlusLogo />
+    </div>
+  ),
 
-const Login = () => {
-  const [loginType, setLoginType] = useState<LoginType>("phone");
-  const { token } = theme.useToken();
+  title: "Emprende+",
+};
+
+// preview-start
+const providers = [{ id: "credentials", name: "Email and Password" }];
+// preview-end
+
+const signIn: (provider: AuthProvider, formData: FormData) => void = async (
+  provider,
+  formData
+) => {
+  const promise = new Promise<void>((resolve) => {
+    setTimeout(() => {
+      alert(
+        `Signing in with "${provider.name}" and credentials: ${formData.get(
+          "email"
+        )}, ${formData.get("password")}`
+      );
+      resolve();
+    }, 300);
+  });
+  return promise;
+};
+
+export default function CredentialsSignInPage() {
+  const theme = useTheme();
   return (
-    <div>
+    <AppProvider branding={BRANDING} theme={theme}>
       <video
-        className="fixed object-cover z-0 w-full h-full"
+        className="fixed object-cover -z-1 w-full h-full"
         autoPlay
         loop
         muted
@@ -52,242 +71,15 @@ const Login = () => {
         <span>Emprende,</span>
         <span>Y Vende</span>
       </div>
-      <main className="">
-        <LoginFormPage
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-          }}
-          submitter={{
-            searchConfig: { submitText: "Iniciar Sesión" },
-          }}
-          logo={
-            <div className="-translate-x-13">
-              <FormLogo />
-            </div>
-          }
-          containerStyle={{
-            backgroundColor: "rgba(0, 0, 0,0.65)",
-            backdropFilter: "blur(4px)",
-          }}
-          // subTitle="Crece Emprendiendo"
-          actions={
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                flexDirection: "column",
-              }}
-            >
-              <Divider
-                plain
-                style={{
-                  borderColor: "white",
-                }}
-              >
-                <span
-                  style={{
-                    color: token.colorTextLightSolid,
-                    fontWeight: "normal",
-                    fontSize: 14,
-                  }}
-                >
-                  Inicia sesión con
-                </span>
-              </Divider>
-              <Space align="center" size={24}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    flexDirection: "column",
-                    height: 40,
-                    width: 40,
-                    border: "1px solid " + token.colorPrimaryBorder,
-                    borderRadius: "50%",
-                  }}
-                  className="cursor-pointer"
-                  onClick={() => {
-                    console.log("Microsoft Clicked");
-                  }}
-                >
-                  <div className="w-4">
-                    <MicrosoftLogo />
-                  </div>
-                </div>
-              </Space>
-            </div>
-          }
-        >
-          <Tabs
-            centered
-            activeKey={loginType}
-            onChange={(activeKey) => setLoginType(activeKey as LoginType)}
-          >
-            <Tabs.TabPane
-              key={"account"}
-              tab={
-                <span
-                  className={`tab-text ${
-                    loginType === "account" ? "tab-text-active" : ""
-                  }`}
-                >
-                  Cuenta
-                </span>
-              }
-            />
-            <Tabs.TabPane
-              key={"phone"}
-              tab={
-                <span
-                  className={`tab-text ${
-                    loginType === "phone" ? "tab-text-active" : ""
-                  }`}
-                >
-                  Teléfono
-                </span>
-              }
-            />
-          </Tabs>
-          {loginType === "account" && (
-            <>
-              <ProFormText
-                name="username"
-                fieldProps={{
-                  size: "large",
-                  prefix: (
-                    <UserOutlined
-                      style={{
-                        color: token.colorText,
-                      }}
-                      className={"prefixIcon"}
-                    />
-                  ),
-                }}
-                placeholder={"Usuario: admin o usuario"}
-                rules={[
-                  {
-                    required: true,
-                    message: "Por favor, ingresa tu usuario!",
-                  },
-                ]}
-              />
-              <ProFormText.Password
-                name="password"
-                fieldProps={{
-                  size: "large",
-                  prefix: (
-                    <LockOutlined
-                      style={{
-                        color: token.colorText,
-                      }}
-                      className={"prefixIcon"}
-                    />
-                  ),
-                }}
-                placeholder={"Contraseña"}
-                rules={[
-                  {
-                    required: true,
-                    message: "Ingresa tu contraseña!",
-                  },
-                ]}
-              />
-            </>
-          )}
-          {loginType === "phone" && (
-            <>
-              <ProFormText
-                fieldProps={{
-                  size: "large",
-                  prefix: (
-                    <MobileOutlined
-                      style={{
-                        color: token.colorText,
-                      }}
-                      className={"prefixIcon"}
-                    />
-                  ),
-                }}
-                name="mobile"
-                placeholder={"Teléfono: 6XXX-XXXX"}
-                rules={[
-                  {
-                    required: true,
-                    message: "No olvides colocar tu teléfono！",
-                  },
-                  {
-                    pattern: /^6\d{3}-\d{4}$/,
-                    message: "Ups! Tu teléfono no es válido",
-                  },
-                ]}
-              />
-              <ProFormCaptcha
-                fieldProps={{
-                  size: "large",
-                  prefix: (
-                    <LockOutlined
-                      style={{
-                        color: token.colorText,
-                      }}
-                      className={"prefixIcon"}
-                    />
-                  ),
-                }}
-                captchaProps={{
-                  size: "large",
-                }}
-                placeholder={"Código de verificación"}
-                captchaTextRender={(timing, count) => {
-                  if (timing) {
-                    return `${count} ${"Obtener nuevo código"}`;
-                  }
-                  return "Enviar código";
-                }}
-                name="captcha"
-                rules={[
-                  {
-                    required: true,
-                    message: "Por favor, ingresa tu código de verificación！",
-                  },
-                ]}
-                onGetCaptcha={async () => {
-                  message.success("Código de verificación correcto!");
-                }}
-              />
-            </>
-          )}
-          <div
-            style={{
-              marginBlockEnd: 24,
-              height: 23,
-            }}
-          >
-            <ProFormCheckbox noStyle name="autoLogin">
-              <span className="text-white">Mantener sesión iniciada</span>
-            </ProFormCheckbox>
-            <a
-              style={{
-                float: "right",
-              }}
-            >
-              Olvidé mi contraseña
-            </a>
-          </div>
-        </LoginFormPage>
-      </main>
-    </div>
+      <SignInPage
+        signIn={signIn}
+        providers={providers}
+        slotProps={{
+          emailField: { autoFocus: false },
+          form: { noValidate: false },
+        }}
+      />
+    </AppProvider>
+    // preview-end
   );
-};
-
-export default () => {
-  return (
-    <ProConfigProvider>
-      <Login />
-    </ProConfigProvider>
-  );
-};
+}
