@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
 import Layout from "./components/Layout";
 import AuthLayout from "./components/AuthLayout";
 
@@ -17,7 +16,6 @@ function App() {
       <>
         <Route path="/login" element={<AuthLayout />}>
           <Route index element={<Login />} />
-          <Route path="register" element={<Register />} />
         </Route>
         <Route path="/" element={<Layout />}>
           <Route path="home" element={<Home />} />

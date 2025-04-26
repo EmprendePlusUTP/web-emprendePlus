@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Layout as AntLayout, Menu, Breadcrumb, theme } from "antd";
 import {
   DesktopOutlined,
   FileOutlined,
@@ -9,8 +8,10 @@ import {
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { useNavigate, Outlet } from "react-router-dom";
+import Sidebar from "./Sidebar";
+import Dashboard from "../pages/Dashboard";
+import Header from "./Header";
 
-const { Header, Content, Footer, Sider } = AntLayout;
 
 type MenuItem = Required<MenuProps>["items"][number];
 
@@ -32,9 +33,7 @@ const Layout: React.FC<{}> = ({}) => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("1");
   const navigate = useNavigate();
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+
 
   const handleMenuClick = ({ key }: { key: string }) => {
     setSelectedKey(key);
@@ -70,44 +69,19 @@ const Layout: React.FC<{}> = ({}) => {
   ];
 
   return (
-    <AntLayout style={{ minHeight: "100vh" }}>
-      <Sider
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-      >
-        <div className="demo-logo-vertical" />
-        <Menu
-          theme="dark"
-          selectedKeys={[selectedKey]}
-          mode="inline"
-          items={items}
-          onClick={handleMenuClick}
-        />
-      </Sider>
-      <AntLayout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
-        <Content style={{ margin: "0 16px" }}>
-          <Breadcrumb style={{ margin: "16px 0" }}>
-            <Breadcrumb.Item>User</Breadcrumb.Item>
-            <Breadcrumb.Item>Bill</Breadcrumb.Item>
-          </Breadcrumb>
-          <div
-            style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            <Outlet /> {/* Render nested routes here */}
-          </div>
-        </Content>
-        <Footer style={{ textAlign: "center" }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
-        </Footer>
-      </AntLayout>
-    </AntLayout>
+    <>
+  <body className="bg-gray-50 dark:bg-neutral-900">
+  <Header/>
+
+  
+
+  <Sidebar/>
+
+
+
+
+  </body>
+    </>
   );
 };
 
