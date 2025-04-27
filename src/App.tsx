@@ -1,30 +1,43 @@
-import {
-  Route,
-  createBrowserRouter,
-  createRoutesFromElements,
-  RouterProvider,
-  Outlet, //Exports the reactDom route to the layout
-} from "react-router-dom";
-import Home from "./pages/Home";
-import Login from "./pages/auth/Login";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthPage from "./pages/auth/AuthPage";
 import Layout from "./components/Layout";
-import AuthLayout from "./components/AuthLayout";
+import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
+import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFoundPage";
+import BusinessSettings from "./pages/Business";
 
 function App() {
-  const router = createBrowserRouter(
-    createRoutesFromElements(
-      <>
-        <Route path="/login" element={<AuthLayout />}>
-          <Route index element={<Login />} />
-        </Route>
-        <Route path="/" element={<Layout />}>
-          <Route path="home" element={<Home />} />
-        </Route>
-      </>
-    )
-  );
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Ruta pública de login/signup */}
+        <Route path="/auth" element={<AuthPage />} />
 
-  return <RouterProvider router={router} />;
+        {/* Todo lo que esté dentro de este Route estará protegido */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Rutas hijas del layout */}
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="products/:id" element={<ProductDetail />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="business" element={<BusinessSettings />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;
