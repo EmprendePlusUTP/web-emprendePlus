@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/auth/AuthPage";
-import Layout from "./components/Layout";
+import Layout from "./layouts/Layout";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
@@ -9,6 +9,7 @@ import Orders from "./pages/Orders";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFoundPage";
 import BusinessSettings from "./pages/Business";
+import { UserProvider } from "./contexts/UserContext";
 
 function App() {
   return (
@@ -22,7 +23,9 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Layout />
+              <UserProvider>
+                <Layout />
+              </UserProvider>
             </ProtectedRoute>
           }
         >
