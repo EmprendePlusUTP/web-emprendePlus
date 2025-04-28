@@ -1,12 +1,26 @@
 const MicrosoftLogo = () => {
   return (
-    <svg viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clipPath="url(#clip0_20_221)">
-        <path d="M1 1H11V11H1V1Z" fill="#F35325" />
-        <path d="M12 1H22V11H12V1Z" fill="#81BC06" />
-        <path d="M1 12H11V22H1V12Z" fill="#05A6F0" />
-        <path d="M12 12H22V22H12V12Z" fill="#FFBA08" />
-      </g>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+      <path
+        fill="#ff5722"
+        d="M6 6H22V22H6z"
+        transform="rotate(-180 14 14)"
+      ></path>
+      <path
+        fill="#4caf50"
+        d="M26 6H42V22H26z"
+        transform="rotate(-180 34 14)"
+      ></path>
+      <path
+        fill="#ffc107"
+        d="M26 26H42V42H26z"
+        transform="rotate(-180 34 34)"
+      ></path>
+      <path
+        fill="#03a9f4"
+        d="M6 26H22V42H6z"
+        transform="rotate(-180 14 34)"
+      ></path>
     </svg>
   );
 };
