@@ -2,7 +2,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-import Loading from "./Loading";
+import FullPageLoader from "./FullPageLoader";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Mientras esté chequeando la sesión, mostramos loader
   if (isLoading) {
-    return <Loading />;
+    return <FullPageLoader />;
   }
 
   // Si NO está autenticado, vamos a /auth (tu página de login interno)

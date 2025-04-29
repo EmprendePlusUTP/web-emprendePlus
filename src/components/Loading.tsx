@@ -1,10 +1,18 @@
 // src/components/Loading.tsx
 import React from "react";
 
-const Loading: React.FC = () => (
-  <div className="flex items-center justify-center h-full w-full py-10">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-  </div>
+const Loading: React.FC<{ size?: number }> = ({ size = 6 }) => (
+  <div
+    className={`
+      inline-block
+      w-${size} h-${size}
+      border-4
+      border-blue-600 border-t-transparent
+      rounded-full
+      animate-spin
+      dark:border-blue-300 dark:border-t-transparent
+    `}
+  />
 );
 
 export default Loading;
