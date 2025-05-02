@@ -81,7 +81,7 @@ export default function Products() {
             label="Galería"
             currentView={viewMode}
             onClick={() => setViewMode("grid")}
-            icon={<GalleryHorizontalEnd size={20}/>}
+            icon={<GalleryHorizontalEnd size={20} />}
           />
         </div>
       </div>
