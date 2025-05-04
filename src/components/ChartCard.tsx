@@ -1,27 +1,21 @@
-// src/components/ChartCard.tsx
-import React, { ReactNode } from "react";
-
-export interface ChartCardProps {
+import { ReactNode } from "react";
+export type ChartCardProps = {
   title?: string;
   value?: string;
   changeBadge?: ReactNode;
-  /** Donde irá tu gráfico o contenido */
   children: ReactNode;
-  /** Para añadir clases Tailwind extras */
   className?: string;
-  /** Define el ancho: auto (por defecto), full (100%) o fit (ajustado al contenido) */
   widthMode?: "auto" | "full" | "fit";
-}
+};
 
-const ChartCard: React.FC<ChartCardProps> = ({
+const ChartCard = ({
   title,
   value,
   changeBadge,
   children,
   className = "",
   widthMode = "auto",
-}) => {
-  // Mapeamos widthMode a clases de Tailwind
+}: ChartCardProps) => {
   const widthClasses = {
     auto: "",
     full: "w-full",
@@ -37,6 +31,7 @@ const ChartCard: React.FC<ChartCardProps> = ({
         "bg-white border border-gray-200 shadow-2xs rounded-xl",
         "dark:bg-neutral-800 dark:border-neutral-700",
         "min-w-0",
+        "dark:text-gray-200",
         // Ancho según prop
         widthClasses[widthMode],
         // Cualquier clase extra
