@@ -7,6 +7,9 @@ import GroupedBarChart, { MonthlyData } from "../components/GroupedBarChart";
 import LineChart, { DataPoint } from "../components/LineChart";
 import StatsCard from "../components/StatsCard";
 import TableCard from "../components/TableCard";
+import { useKeyframes, type Keyframe } from "../hooks/useKeyframes";
+import { dummyData } from "../components/DummyBarRaceData";
+import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
 
 export default function Dashboard() {
   const starProductSales: MonthlyData[] = [
@@ -113,6 +116,7 @@ export default function Dashboard() {
     },
   ];
 
+  const keyframes: Keyframe[] = useKeyframes(dummyData, 8);
   return (
     <div className="flex flex-col gap-6">
       {/* --- Métricas rápidas --- */}
@@ -147,6 +151,14 @@ export default function Dashboard() {
           title="Órdenes Recientes"
         />
       </TableCard>
+
+      <ChartCard title="Productos Estrellas">
+        <RacingBarChartWithControls
+          keyframes={keyframes}
+          numOfBars={10}
+          margin={{ top: 32, right: 6, bottom: 6, left: 6 }}
+        />
+      </ChartCard>
     </div>
   );
 }
