@@ -1,0 +1,22 @@
+export type Product = {
+    id: string;
+    business_id: string;
+    sku: string;
+    name: string;
+    slug: string;
+    description: string;
+    category: string;
+    tags: string[];
+    price: number;
+    cost: number;
+    discount: number;
+    stock: number;
+    min_stock_alert: number;
+    supplier: string;
+    status: "active" | "inactive"; 
+    color: string;
+    weight: number;
+    tax_rate: number;
+    images: string[];
+    created_at: string; 
+  };
