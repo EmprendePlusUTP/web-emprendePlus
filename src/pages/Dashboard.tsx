@@ -7,11 +7,8 @@ import GroupedBarChart, { MonthlyData } from "../components/GroupedBarChart";
 import LineChart, { DataPoint } from "../components/LineChart";
 import StatsCard from "../components/StatsCard";
 import TableCard from "../components/TableCard";
-import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
-import { useKeyframes, type Keyframe } from "../hooks/useKeyframes";
-import { dummyData } from "../components/DummyBarRaceData";
 import { sunburstData } from "../data/SunburstData/sunburstData";
-import SunburstChart from "../components/SunburstChart";
+import SunburstChart from "../components/SunBurstChart";
 
 export default function Dashboard() {
   const starProductSales: MonthlyData[] = [
@@ -118,7 +115,6 @@ export default function Dashboard() {
     },
   ];
 
-  const keyframes: Keyframe[] = useKeyframes(dummyData, 8);
   return (
     <div className="flex flex-col gap-6">
       {/* --- Métricas rápidas --- */}
@@ -154,9 +150,7 @@ export default function Dashboard() {
         />
       </TableCard>
 
-      <ChartCard title="Productos Estrellas">
-        <RacingBarChartWithControls keyframes={keyframes} numOfBars={10} />
-      </ChartCard>
+
 
       <ChartCard>
         <SunburstChart data={sunburstData} />
