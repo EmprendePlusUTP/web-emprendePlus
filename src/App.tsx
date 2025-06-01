@@ -10,6 +10,8 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFoundPage";
 import BusinessSettings from "./pages/Business";
 import { UserProvider } from "./contexts/UserContext";
+import Finances from "./pages/Finances";
+import FinancesDetails from "./pages/FinancesDetails";
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="profile" element={<Profile />} />
           <Route path="business" element={<BusinessSettings />} />
+          <Route path="finances" element={<Finances />} />
+          <Route path="finances/details" element={<FinancesDetails />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
