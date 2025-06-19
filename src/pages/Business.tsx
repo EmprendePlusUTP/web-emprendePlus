@@ -2,6 +2,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../components/Modal"; // para previsualizar la factura
+import { useAuth0 } from "@auth0/auth0-react";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -33,6 +34,7 @@ type BusinessForm = {
 };
 
 export default function BusinessSettings() {
+  const {getAccessTokenSilently} = useAuth0();
   const { register, handleSubmit, watch, formState } = useForm<BusinessForm>({
     defaultValues: {
       currency: "USD",
@@ -48,9 +50,59 @@ export default function BusinessSettings() {
   });
   const [showPreview, setShowPreview] = React.useState(false);
 
-  const onSubmit = (data: BusinessForm) => {
-    console.log("Guardar Business Settings:", data);
-    // aquí iría la llamada a la API/post a BD
+  const onSubmit = async (data: BusinessForm) => {
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: "openid profile email",
+        },
+      });
+  
+      const payload = {
+        name: data.name,
+        description: data.tagline,
+        tagline: data.tagline,
+        legal_name: data.legalName,
+        tax_id: data.taxId,
+        fiscal_address: data.fiscalAddress,
+        phone: data.phone,
+        email: data.email,
+        currency: data.currency,
+        invoice_prefix: data.invoicePrefix,
+        invoice_counter: data.invoiceCounter,
+        payment_terms_amount: data.paymentTermsAmount,
+        payment_terms_unit: data.paymentTermsUnit,
+        bank_details: data.bankDetails,
+        tax_rates: data.taxRates,
+        timezone: data.timezone,
+        language: data.language,
+        date_format: data.dateFormat,
+        number_format: data.numberFormat,
+        // logo_url: puedes subir esto aparte si manejas imágenes en otra API
+      };
+      
+  
+      const res = await fetch("http://localhost:8000/api/business/update-business/", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!res.ok) {
+        throw new Error("Error al actualizar el negocio");
+      }
+  
+      const result = await res.json();
+      console.log("Negocio actualizado:", result);
+      alert("Configuración guardada con éxito.");
+    } catch (err) {
+      console.error(err);
+      alert("Ocurrió un error al guardar los cambios.");
+    }
   };
 
   const logoFiles = watch("logo");

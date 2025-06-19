@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Pencil, CheckIcon, XIcon } from "lucide-react";
+import { useUserWithBusiness } from "../hooks/useUserBusiness";
 
 export default function Profile() {
   const { user, isAuthenticated, isLoading } = useAuth0();
@@ -10,6 +11,8 @@ export default function Profile() {
   );
   const [draft, setDraft] = useState({ name: "", email: "" });
   const [profile, setProfile] = useState({ name: "", email: "" });
+  const { userData } = useUserWithBusiness();
+  const businessName = userData?.business_name || "EmprendePlus";
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -154,7 +157,7 @@ export default function Profile() {
                 <dt className="font-semibold text-gray-800 dark:text-neutral-200">
                   Nombre de la empresa
                 </dt>
-                <dd>EmprendePlus</dd>
+                <dd>{businessName}</dd>
               </div>
               <div>
                 <dt className="font-semibold text-gray-800 dark:text-neutral-200">
