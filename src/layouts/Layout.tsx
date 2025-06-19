@@ -49,18 +49,19 @@ const navItems: NavItem[] = [
 
 const Layout: React.FC = () => {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const hasSentSession = React.useRef(false);
+
   useEffect(() => {
     const sendUserSession = async () => {
-      if (isAuthenticated && user) {
+      if (isAuthenticated && user && !hasSentSession.current) {
+        hasSentSession.current = true; // Marca como enviado
         try {
           const token = await getAccessTokenSilently({
             authorizationParams: {
-             audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-             scope: "openid profile email",
-             
+              audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+              scope: "openid profile email",
             },
-          })
-          console.log(token)
+          });
   
           await fetch("http://localhost:8000/api/register-session", {
             method: "POST",

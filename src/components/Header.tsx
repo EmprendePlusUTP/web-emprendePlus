@@ -3,12 +3,14 @@ import React, { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UserDropdown from "./UserDropdown";
+import { useUserWithBusiness } from "../hooks/useUserBusiness";
 
 const Header: React.FC = () => {
+  const { userData } = useUserWithBusiness();
   const { user, isAuthenticated, logout, isLoading } = useAuth0();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const businessName = userData?.business_name || "EmprendePlus";
   useEffect(() => {
     // Si ya cargó Auth0, NO estás autenticado y NO estás ya en /auth
     if (!isLoading && !isAuthenticated && location.pathname !== "/auth") {
@@ -27,11 +29,7 @@ const Header: React.FC = () => {
           {isAuthenticated && user ? (
             <UserDropdown
               userName={user.name || "Usuario"}
-              businessName={
-                // claim personalizado
-                (user as any)["https://tu-app.com/businessName"] ||
-                "EmprendePlus"
-              }
+              businessName={businessName}
               email={user.email || ""}
               avatarUrl={user.picture || undefined}
               onLogout={() =>
