@@ -1,5 +1,5 @@
 // src/pages/ProductView.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import { Column } from "../components/BaseTable";
@@ -7,43 +7,39 @@ import ProductCard, { Product } from "../components/ProductCard";
 import ViewToggleButton from "./ViewToggleButton";
 import { GalleryHorizontalEnd, List } from "lucide-react";
 import TableCard from "../components/TableCard";
+import { deleteProductBySku, fetchProducts } from "../services/productServices";
+import { useAuth0 } from "@auth0/auth0-react";
 
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "Camiseta",
-    inventory: 120,
-    price: 19.99,
-    imageUrl: "/img/camiseta.jpg",
-  },
-  {
-    id: "2",
-    name: "Gorra",
-    inventory: 120,
-    price: 9.99,
-    imageUrl: "/img/gorra.jpg",
-  },
-  {
-    id: "3",
-    name: "Pantalón",
-    inventory: 120,
-    price: 29.5,
-    imageUrl: "/img/pantalon.jpg",
-  },
-  // …
-];
 
 export default function Products() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const navigate = useNavigate();
 
+  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (!isAuthenticated) return;
+        const token = await getAccessTokenSilently();
+        const data = await fetchProducts(token);
+        setProducts(data);
+      } catch (e) {
+        console.error("Error loading products", e);
+      }
+    };
+
+    load();
+  }, [isAuthenticated]);
+
   // Columnas para la vista de listado
   const columns: Column<Product>[] = [
     { key: "name", header: "Nombre" },
     {
-      key: "price",
+      key: "sale_price",
       header: "Precio",
-      render: (p) => `$${p.price.toFixed(2)}`,
+      render: (p) => `$${p.sale_price.toFixed(2)}`,
     },
     {
       key: "inventory",
@@ -51,17 +47,37 @@ export default function Products() {
       render: (p) => p.inventory || 0,
     },
     {
-      key: "id",
-      header: "Acciones",
-      render: (p) => (
-        <button
-          className="text-blue-600 hover:underline"
-          onClick={() => navigate(`/products/${p.id}`)}
-        >
-          Editar
-        </button>
-      ),
-    },
+  key: "sku",
+  header: "Acciones",
+  render: (p) => (
+    <div className="flex space-x-3">
+      <button
+        className="text-blue-600 hover:underline"
+        onClick={() => navigate(`/products/${p.sku}`)}
+      >
+        Editar
+      </button>
+      <button
+        className="text-red-600 hover:underline"
+        onClick={async () => {
+          const confirm = window.confirm(`¿Eliminar producto "${p.name}"?`);
+          if (!confirm) return;
+
+          try {
+            const token = await getAccessTokenSilently();
+            await deleteProductBySku(p.sku, token);
+            setProducts((prev) => prev.filter((prod) => prod.sku !== p.sku));
+          } catch (err) {
+            console.error("Error deleting product", err);
+            alert("Error eliminando el producto");
+          }
+        }}
+      >
+        Eliminar
+      </button>
+    </div>
+  ),
+}
   ];
 
   return (
@@ -89,8 +105,8 @@ export default function Products() {
       {/* Contenido según vista */}
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockProducts.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {products.map((p) => (
+            <ProductCard key={p.sku} product={p} />
           ))}
         </div>
       ) : (
@@ -107,7 +123,7 @@ export default function Products() {
                 </button>
               }
               columns={columns}
-              data={mockProducts}
+              data={products}
             />
           </TableCard>
         </div>

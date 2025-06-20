@@ -2,39 +2,20 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { Pencil } from "lucide-react";
-type FormData = {
-  sku: string;
-  name: string;
-  slug: string;
-  description: string;
-  category: string;
-  tags: string[];
-  price: number;
-  cost: number;
-  discount?: number;
-  stock: number;
-  minStockAlert: number;
-  supplier: string;
-  status: "active" | "draft" | "archived";
-  color: string;
-  dimensions: { width: number; height: number; depth: number };
-  weight: number;
-  taxRate: number;
-  createdAt: string;
-  updatedAt: string;
-  rating?: number;
-};
-
-type Product = FormData & { id: string; imageUrl?: string };
+import { fetchProductBySku } from "../services/productServices";
+import { ProductDetails } from "../hooks/useProductDetails";
+ 
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = id === "new";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [product, setProduct] = useState<Product | null>(null);
+  
+  
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
   const {
     register,
@@ -42,92 +23,105 @@ export default function ProductDetail() {
     reset,
     setValue,
     formState: { isSubmitting },
-  } = useForm<FormData>({ defaultValues: {} as FormData });
+  } = useForm<ProductDetails>({ defaultValues: {} as ProductDetails });
 
-  // Editable name and SKU
   const [editingName, setEditingName] = useState(isNew);
   const [nameValue, setNameValue] = useState("");
   const [skuValue, setSkuValue] = useState("");
+  const { getAccessTokenSilently } = useAuth0();
+  type Product = ProductDetails & { imageUrl?: string };
+  const [product, setProduct] = useState<Product | null>(null);
 
-  // Load or init
+
   useEffect(() => {
-    if (isNew) {
-      reset({
-        sku: "",
-        name: "",
-        slug: "",
-        description: "",
-        category: "",
-        tags: [],
-        price: 0,
-        cost: 0,
-        discount: 0,
-        stock: 0,
-        minStockAlert: 0,
-        supplier: "",
-        status: "active",
-        color: "",
-        dimensions: { width: 0, height: 0, depth: 0 },
-        weight: 0,
-        taxRate: 0,
-        createdAt: "",
-        updatedAt: "",
-      });
-      setEditingName(true);
-      setNameValue("");
-      setSkuValue("");
-      setPreviewUrl(undefined);
-      setLoading(false);
-      return;
-    }
-    // Mock fetch
-    const mock: Product = {
-      id: id || "",
-      sku: "SKU123",
-      name: "Camiseta",
-      slug: "camiseta",
-      description: "Descripción detallada del producto.",
-      category: "Ropa",
-      tags: ["moda", "verano"],
-      price: 19.99,
-      cost: 10,
-      discount: 0,
-      stock: 120,
-      minStockAlert: 10,
-      supplier: "Proveedor A",
-      status: "active",
-      color: "Navy",
-      dimensions: { width: 10, height: 20, depth: 5 },
-      weight: 0.5,
-      taxRate: 0.21,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      rating: 4.5,
-      imageUrl: "/img/camiseta.jpg",
+    const load = async () => {
+      if (!isNew && id) {
+        const token = await getAccessTokenSilently();
+        const product = await fetchProductBySku(id, token);
+        setNameValue(product.name);
+        setSkuValue(product.sku);
+        setPreviewUrl(product.imageUrl);
+        reset(product);
+        setLoading(false);
+      } else {
+        reset({
+          sku: "",
+          name: "",
+          description: "",
+          type: "",
+          cost: 0,
+          sale_price: 0,
+          stock: 0,
+          discount: 0,
+          supplier: "",
+          status: "active",
+          color: "",
+          width: 0,
+          height: 0,
+          depth: 0,
+          weight: 0,
+          tax_rate: 0,
+          created_at: "",
+          updated_at: "",
+          rating: 0,
+        });
+        setEditingName(true);
+        setNameValue("");
+        setSkuValue("");
+        setPreviewUrl(undefined);
+        setLoading(false);
+      }
     };
-    setProduct(mock);
-    reset(mock);
-    setNameValue(mock.name);
-    setSkuValue(mock.sku);
-    setPreviewUrl(mock.imageUrl);
-    setLoading(false);
-  }, [id, isNew, reset]);
+    load();
+  }, [id, isNew, getAccessTokenSilently, reset]);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) setPreviewUrl(URL.createObjectURL(file));
-    },
-    []
-  );
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setPreviewUrl(URL.createObjectURL(file));
+  }, []);
 
-  const onSubmit = (data: FormData) => {
-    console.log(isNew ? "Crear producto" : "Guardar producto", data);
-    navigate("/products");
+  const onSubmit = async (data: ProductDetails) => {
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: "openid profile email",
+        },
+      });
+
+      const payload = {
+        sku: data.sku,
+        type: data.type,
+        cost: data.cost,
+        name: data.name,
+        sale_price: data.sale_price,
+        stock: data.stock,
+      };
+
+      console.log("🚀 Payload enviado al backend:", payload);
+
+      const response = await fetch("http://localhost:8000/api/products/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Error creating product");
+
+      const newProduct = await response.json();
+      console.log("Producto creado:", newProduct);
+      navigate("/products");
+    } catch (err) {
+      console.error(err);
+      alert("Hubo un error al guardar el producto.");
+    }
   };
 
   if (loading) return <p>Cargando...</p>;
-  if (!product && !isNew) return <p>Producto no encontrado</p>;
+  if (!isNew && !skuValue) return <p>Producto no encontrado</p>;
 
   return (
     <div className="max-w-6xl mx-auto bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
@@ -255,7 +249,7 @@ export default function ProductDetail() {
                 <input
                   type="number"
                   step="0.01"
-                  {...register("price", { valueAsNumber: true })}
+                  {...register("sale_price", { valueAsNumber: true })}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -312,19 +306,19 @@ export default function ProductDetail() {
                   <input
                     type="number"
                     placeholder="Ancho"
-                    {...register("dimensions.width", { valueAsNumber: true })}
+                    {...register("width", { valueAsNumber: true })}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                   <input
                     type="number"
                     placeholder="Alto"
-                    {...register("dimensions.height", { valueAsNumber: true })}
+                    {...register("height", { valueAsNumber: true })}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                   <input
                     type="number"
                     placeholder="Prof."
-                    {...register("dimensions.depth", { valueAsNumber: true })}
+                    {...register("depth", { valueAsNumber: true })}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                 </div>
@@ -347,7 +341,7 @@ export default function ProductDetail() {
                 <input
                   type="number"
                   step="0.01"
-                  {...register("taxRate", { valueAsNumber: true })}
+                  {...register("tax_rate", { valueAsNumber: true })}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -376,3 +370,4 @@ export default function ProductDetail() {
     </div>
   );
 }
+
