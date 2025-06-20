@@ -1,3 +1,5 @@
+/** @format */
+
 // src/pages/Sales.tsx
 import { useNavigate } from "react-router-dom";
 import StatsCard from "../components/StatsCard";
@@ -13,35 +15,40 @@ import { Product } from "../components/ProductCard"; // si ya tienes ese tipo
 import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
 
-
-
 export default function Sales() {
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
-const [products, setProducts] = useState<Product[]>([]);
-const [selectedProducts, setSelectedProducts] = useState<
-  { sku: string; name: string; quantity: number; price: number; subtotal: number }[]
->([]);
-const [selectedSku, setSelectedSku] = useState("");
-const [quantity, setQuantity] = useState(1);
-const [showCreateSale, setShowCreateSale] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<
+    {
+      sku: string;
+      name: string;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }[]
+  >([]);
+  const [selectedSku, setSelectedSku] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [showCreateSale, setShowCreateSale] = useState(false);
 
-    const [allSales, setAllSales] = useState<SaleFromAPI[]>([]);
+  const [allSales, setAllSales] = useState<SaleFromAPI[]>([]);
   const [salesByProduct, setSalesByProduct] = useState<SaleProduct[]>([]);
 
   const handleCloseModal = () => {
-  setShowCreateSale(false);
-  setSelectedProducts([]);
-  setSelectedSku("");
-  setQuantity(1);
-};
-const { totalRevenue, totalOrders, averageValue, totalItems } = computeSalesStats(allSales);
-const stats = [
-  { title: "Ingresos del mes", value: `$${totalRevenue.toFixed(2)}` },
-  { title: "Órdenes procesadas", value: totalOrders.toString() },
-  { title: "Valor medio", value: `$${averageValue.toFixed(2)}` },
-  { title: "Artículos vendidos", value: totalItems.toString() },
-];
+    setShowCreateSale(false);
+    setSelectedProducts([]);
+    setSelectedSku("");
+    setQuantity(1);
+  };
+  const { totalRevenue, totalOrders, averageValue, totalItems } =
+    computeSalesStats(allSales);
+  const stats = [
+    { title: "Ingresos del mes", value: `$${totalRevenue.toFixed(2)}` },
+    { title: "Órdenes procesadas", value: totalOrders.toString() },
+    { title: "Valor medio", value: `$${averageValue.toFixed(2)}` },
+    { title: "Artículos vendidos", value: totalItems.toString() },
+  ];
 
   useEffect(() => {
     const load = async () => {
@@ -121,27 +128,26 @@ const stats = [
     },
   ];
 
-
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  {stats.map((s, i) => (
-    <StatsCard key={i} {...s} />
-  ))}
-</div>
+        {stats.map((s, i) => (
+          <StatsCard key={i} {...s} />
+        ))}
+      </div>
       <div className="flex justify-end">
         <button
           onClick={async () => {
-    setShowCreateSale(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const data = await fetchProducts(token);
-      setProducts(data);
-    } catch (err) {
-      console.error("Error cargando productos", err);
-      alert("No se pudieron cargar los productos");
-    }
-  }}
+            setShowCreateSale(true);
+            try {
+              const token = await getAccessTokenSilently();
+              const data = await fetchProducts(token);
+              setProducts(data);
+            } catch (err) {
+              console.error("Error cargando productos", err);
+              alert("No se pudieron cargar los productos");
+            }
+          }}
           className="py-2 px-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           + Registrar Venta
@@ -150,11 +156,7 @@ const stats = [
 
       {/* Tabla de ventas */}
       <TableCard>
-        <DataTable
-          title="Ventas"
-          columns={salesColumns}
-          data={allSales}
-        />
+        <DataTable title="Ventas" columns={salesColumns} data={allSales} />
       </TableCard>
 
       {/* Tabla de ventas por producto */}
@@ -166,137 +168,151 @@ const stats = [
         />
       </TableCard>
       {showCreateSale && (
-  <Modal onClose={handleCloseModal}>
-  <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-neutral-200">Registrar Venta</h2>
+        <Modal onClose={handleCloseModal}>
+          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-neutral-200">
+            Registrar Venta
+          </h2>
 
-  {/* Selección de producto */}
-  <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Producto</label>
-    <select
-      value={selectedSku}
-      onChange={(e) => setSelectedSku(e.target.value)}
-      className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
-    >
-      <option value="">Seleccionar producto</option>
-      {products.map((p) => (
-        <option key={p.sku} value={p.sku}>
-          {p.sku} | {p.name}
-        </option>
-      ))}
-    </select>
+          {/* Selección de producto */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
+              Producto
+            </label>
+            <select
+              value={selectedSku}
+              onChange={(e) => setSelectedSku(e.target.value)}
+              className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            >
+              <option value="">Seleccionar producto</option>
+              {products.map((p) => (
+                <option key={p.sku} value={p.sku}>
+                  {p.sku} | {p.name}
+                </option>
+              ))}
+            </select>
 
-    <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">Cantidad</label>
-    <input
-      type="number"
-      min={1}
-      value={quantity}
-      onChange={(e) => setQuantity(Number(e.target.value))}
-      className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
-    />
+            <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
+              Cantidad
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            />
 
-    <button
-      onClick={() => {
-        const product = products.find((p) => p.sku === selectedSku);
-        if (!product || quantity <= 0) return;
+            <button
+              onClick={() => {
+                const product = products.find((p) => p.sku === selectedSku);
+                if (!product || quantity <= 0) return;
 
-        const subtotal = product.sale_price * quantity;
-        setSelectedProducts((prev) => [
-          ...prev,
-          {
-            sku: product.sku,
-            name: product.name,
-            quantity,
-            price: product.sale_price,
-            subtotal,
-          },
-        ]);
-        setSelectedSku("");
-        setQuantity(1);
-      }}
-      className="mt-2 py-1 px-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-    >
-      Agregar producto
-    </button>
-  </div>
+                const subtotal = product.sale_price * quantity;
+                setSelectedProducts((prev) => [
+                  ...prev,
+                  {
+                    sku: product.sku,
+                    name: product.name,
+                    quantity,
+                    price: product.sale_price,
+                    subtotal,
+                  },
+                ]);
+                setSelectedSku("");
+                setQuantity(1);
+              }}
+              className="mt-2 py-1 px-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Agregar producto
+            </button>
+          </div>
 
-  {/* Lista de productos seleccionados */}
-  <div className="mt-4 space-y-2">
-    <h3 className="font-semibold text-gray-800 dark:text-neutral-200">Productos en esta venta:</h3>
-    {selectedProducts.map((p, i) => (
-  <div
-    key={i}
-    className="flex justify-between items-center text-sm border-b border-gray-300 dark:border-neutral-600 py-1 text-gray-700 dark:text-neutral-100"
-  >
-    <span>{p.name} (x{p.quantity})</span>
-    <div className="flex items-center gap-3">
-      <span>${p.subtotal.toFixed(2)}</span>
-      <button
-        onClick={() =>
-          setSelectedProducts((prev) =>
-            prev.filter((_, idx) => idx !== i)
-          )
-        }
-        className="text-red-600 hover:underline text-xs"
-      >
-        Eliminar
-      </button>
+          {/* Lista de productos seleccionados */}
+          <div className="mt-4 space-y-2">
+            <h3 className="font-semibold text-gray-800 dark:text-neutral-200">
+              Productos en esta venta:
+            </h3>
+            {selectedProducts.map((p, i) => (
+              <div
+                key={i}
+                className="flex justify-between items-center text-sm border-b border-gray-300 dark:border-neutral-600 py-1 text-gray-700 dark:text-neutral-100"
+              >
+                <span>
+                  {p.name} (x{p.quantity})
+                </span>
+                <div className="flex items-center gap-3">
+                  <span>${p.subtotal.toFixed(2)}</span>
+                  <button
+                    onClick={() =>
+                      setSelectedProducts((prev) =>
+                        prev.filter((_, idx) => idx !== i)
+                      )
+                    }
+                    className="text-red-600 hover:underline text-xs"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Total y botones */}
+          <div className="mt-4 flex justify-between items-center text-gray-800 dark:text-neutral-200">
+            <strong>Total:</strong>
+            <span>
+              $
+              {selectedProducts
+                .reduce((acc, p) => acc + p.subtotal, 0)
+                .toFixed(2)}
+            </span>
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={async () => {
+                try {
+                  const token = await getAccessTokenSilently();
+
+                  await createSale(
+                    {
+                      sale_date: new Date().toISOString().split("T")[0],
+                      products: selectedProducts.map((p) => ({
+                        product_id: p.sku,
+                        quantity: p.quantity,
+                        subtotal: p.subtotal,
+                      })),
+                    },
+                    token
+                  );
+
+                  // 2) Refrescar sólo los datos
+                  const rawSales = await fetchSales(token);
+                  setAllSales(rawSales);
+
+                  // 3) Reconstruir ventas por producto
+                  const flat: SaleProduct[] = [];
+                  rawSales.forEach((sale) =>
+                    sale.sale_products.forEach((sp) =>
+                      flat.push({ ...sp, date: sale.sale_date })
+                    )
+                  );
+                  setSalesByProduct(flat);
+
+                  alert("Venta registrada correctamente");
+                  handleCloseModal();
+                } catch (err: any) {
+                  alert(err.message || "Error registrando la venta");
+                  console.error("Error al guardar venta:", err);
+                }
+              }}
+              className="py-1 px-4 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            >
+              Guardar Venta
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
-  </div>
-))}
-  </div>
-
-  {/* Total y botones */}
-  <div className="mt-4 flex justify-between items-center text-gray-800 dark:text-neutral-200">
-    <strong>Total:</strong>
-    <span>
-      $
-      {selectedProducts
-        .reduce((acc, p) => acc + p.subtotal, 0)
-        .toFixed(2)}
-    </span>
-  </div>
-
-  <div className="mt-4 flex justify-end gap-2">
-    <button
-      onClick={handleCloseModal}
-      className="py-1 px-3 border rounded text-sm border-gray-400 text-gray-700 dark:border-neutral-500 dark:text-neutral-200"
-    >
-      Cancelar
-    </button>
-    <button
-  onClick={async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      await createSale(
-        {
-          sale_date: new Date().toISOString().split("T")[0],
-          products: selectedProducts.map((p) => ({
-            product_id: p.sku,
-            quantity: p.quantity,
-            subtotal: p.subtotal,
-          })),
-        },
-        token
-      );
-
-      alert("Venta registrada correctamente");
-      handleCloseModal();
-      window.location.reload(); // o recargar ventas
-    } catch (err: any) {
-      alert(err.message || "Error registrando la venta");
-      console.error("Error al guardar venta:", err);
-    }
-  }}
-  className="py-1 px-4 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
->
-  Guardar Venta
-</button>
-  </div>
-</Modal>
-)}
-    </div>
-
-    
   );
 }
-
