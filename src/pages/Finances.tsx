@@ -1,5 +1,5 @@
 // src/components/finances/FinancesPage.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ArrowUpCircle, ArrowDownCircle, BarChart2 } from "lucide-react";
@@ -18,21 +18,58 @@ import RacingBarChartWithControls from "../components/RacingBarChartWithControls
 import { useKeyframes, type Keyframe } from "../hooks/useKeyframes";
 import { dummyData } from "../components/DummyBarRaceData";
 import ChartCard from "../components/ChartCard";
+import { useAuth0 } from "@auth0/auth0-react";
+import { createFinance, deleteFinance, fetchFinances } from "../services/financesServices";
+import { FinanceCreate, FinanceRead } from "../types/financeTypes";
 
 export const Finances = () => {
+
+
+const { getAccessTokenSilently } = useAuth0();
+  const [transactions, setTransactions] = useState<FinanceRead[]>([]);
+  const [month, setMonth] = useState<string>(new Date().toISOString().slice(0, 7));
+
+  // Cargar finanzas al montar y al cambiar mes
+  useEffect(() => {
+    (async () => {
+      const token = await getAccessTokenSilently();
+      const data = await fetchFinances(token);
+      setTransactions(data);
+    })();
+  }, [getAccessTokenSilently, month]);
+
+  const handleAddTransaction = async (tx: Transaction) => {
+    const token = await getAccessTokenSilently();
+    const fin: FinanceCreate = {
+      date: tx.date,
+      type: tx.type,
+      category: tx.category,
+      amount: tx.amount,
+      description: "",
+    };
+    const created = await createFinance(fin, token);
+    setTransactions((prev) => [created, ...prev]);
+  };
+
+  
+
+
   const keyframes: Keyframe[] = useKeyframes(dummyData, 8);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   // Estado para el modal y simulación seleccionada
   const [showModal, setShowModal] = useState(false);
   const [selectedSim, setSelectedSim] = useState<"bar" | null>(null);
   const navigate = useNavigate();
 
-  const handleAddTransaction = (tx: Transaction) => {
-    setTransactions((prev) => [tx, ...prev]);
-  };
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((tx) => tx.id !== id));
+   const handleDeleteTransaction = async (id: string | number) => {
+    try {
+      const token = await getAccessTokenSilently();
+     const numericId = typeof id === "string" ? parseInt(id, 10) : id;
+     await deleteFinance(numericId, token);
+      setTransactions((prev) => prev.filter((tx) => tx.id !== numericId));
+    } catch (error) {
+      console.error("Error eliminando transacción:", error);
+    }
   };
 
   const totals = useMemo(() => {

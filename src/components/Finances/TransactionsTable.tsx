@@ -4,7 +4,7 @@ import { Transaction } from "./AddTransactionForm";
 
 type Props = {
   data: Transaction[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string | number) => void;
 };
 
 export const TransactionsTable = ({ data, onDelete }: Props) => {

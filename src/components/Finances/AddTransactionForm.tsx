@@ -4,7 +4,7 @@ import React, { useState } from "react";
 export type TransactionType = "income" | "expense";
 
 export type Transaction = {
-  id: string;
+  id: string | number;
   type: TransactionType;
   category: string;
   amount: number;
