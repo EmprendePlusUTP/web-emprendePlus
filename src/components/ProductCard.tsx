@@ -6,7 +6,7 @@ export interface Product {
   sku: string;
   name: string;
   sale_price: number;
-  inventory: number;
+  stock: number;
   imageUrl?: string;
 }
 

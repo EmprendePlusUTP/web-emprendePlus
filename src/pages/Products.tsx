@@ -42,9 +42,9 @@ export default function Products() {
       render: (p) => `$${p.sale_price.toFixed(2)}`,
     },
     {
-      key: "inventory",
+      key: "stock",
       header: "Inventario",
-      render: (p) => p.inventory || 0,
+      render: (p) => p.stock || 0,
     },
     {
   key: "sku",

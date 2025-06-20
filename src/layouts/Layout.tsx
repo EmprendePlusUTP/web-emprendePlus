@@ -28,8 +28,8 @@ const navItems: NavItem[] = [
     ),
   },
   {
-    label: "Pedidos",
-    to: "/orders",
+    label: "Ventas",
+    to: "/sales",
     icon: (
       <div>
         <HandCoins />

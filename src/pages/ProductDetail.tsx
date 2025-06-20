@@ -81,43 +81,52 @@ export default function ProductDetail() {
   }, []);
 
   const onSubmit = async (data: ProductDetails) => {
-    try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-          scope: "openid profile email",
-        },
-      });
+  try {
+    const token = await getAccessTokenSilently({
+      authorizationParams: {
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        scope: "openid profile email",
+      },
+    });
 
-      const payload = {
-        sku: data.sku,
-        type: data.type,
-        cost: data.cost,
-        name: data.name,
-        sale_price: data.sale_price,
-        stock: data.stock,
-      };
+    const payload = {
+      sku: data.sku,
+      type: data.type,
+      cost: data.cost,
+      name: data.name,
+      sale_price: data.sale_price,
+      stock: data.stock,
+    };
 
-      console.log("🚀 Payload enviado al backend:", payload);
+    const method = isNew ? "POST" : "PATCH";
+    const url = isNew
+      ? "http://localhost:8000/api/products/"
+      : `http://localhost:8000/api/products/${skuValue}`;
 
-      const response = await fetch("http://localhost:8000/api/products/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    console.log("🚀 Payload enviado al backend:", payload);
 
-      if (!response.ok) throw new Error("Error creating product");
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-      const newProduct = await response.json();
-      console.log("Producto creado:", newProduct);
-      navigate("/products");
-    } catch (err) {
-      console.error(err);
-      alert("Hubo un error al guardar el producto.");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response:", errorText);
+      throw new Error("Error al guardar el producto");
     }
+
+    const result = await response.json();
+    console.log("Producto guardado:", result);
+    navigate("/products");
+  } catch (err) {
+    console.error(err);
+    alert("Hubo un error al guardar el producto.");
+  }
   };
 
   if (loading) return <p>Cargando...</p>;
