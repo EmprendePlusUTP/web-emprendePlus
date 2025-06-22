@@ -1,3 +1,5 @@
+/** @format */
+
 // src/pages/Dashboard.tsx
 import ChangeBadge from "../components/ChangeBadge";
 import ChartCard from "../components/ChartCard";
@@ -7,8 +9,6 @@ import GroupedBarChart, { MonthlyData } from "../components/GroupedBarChart";
 import LineChart, { DataPoint } from "../components/LineChart";
 import StatsCard from "../components/StatsCard";
 import TableCard from "../components/TableCard";
-import { sunburstData } from "../data/SunburstData/sunburstData";
-import SunburstChart from "../components/SunBurstChart";
 
 export default function Dashboard() {
   const starProductSales: MonthlyData[] = [
@@ -149,12 +149,6 @@ export default function Dashboard() {
           title="Órdenes Recientes"
         />
       </TableCard>
-
-
-
-      <ChartCard>
-        <SunburstChart data={sunburstData} />
-      </ChartCard>
     </div>
   );
 }

@@ -1,5 +1,7 @@
+/** @format */
+
 // src/pages/ProductView.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import { Column } from "../components/BaseTable";
@@ -9,7 +11,7 @@ import { GalleryHorizontalEnd, List } from "lucide-react";
 import TableCard from "../components/TableCard";
 import { deleteProductBySku, fetchProducts } from "../services/productServices";
 import { useAuth0 } from "@auth0/auth0-react";
-
+import LoadingPulse from "../components/LoadingPulse";
 
 export default function Products() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -17,21 +19,37 @@ export default function Products() {
 
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const calledRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
+      if (!isAuthenticated || calledRef.current) return;
+      calledRef.current = true;
+
       try {
-        if (!isAuthenticated) return;
         const token = await getAccessTokenSilently();
         const data = await fetchProducts(token);
         setProducts(data);
       } catch (e) {
         console.error("Error loading products", e);
+      } finally {
+        setLoading(false);
       }
     };
 
     load();
   }, [isAuthenticated]);
+
+  if (loading)
+    return (
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
+    );
 
   // Columnas para la vista de listado
   const columns: Column<Product>[] = [
@@ -47,37 +65,39 @@ export default function Products() {
       render: (p) => p.stock || 0,
     },
     {
-  key: "sku",
-  header: "Acciones",
-  render: (p) => (
-    <div className="flex space-x-3">
-      <button
-        className="text-blue-600 hover:underline"
-        onClick={() => navigate(`/products/${p.sku}`)}
-      >
-        Editar
-      </button>
-      <button
-        className="text-red-600 hover:underline"
-        onClick={async () => {
-          const confirm = window.confirm(`¿Eliminar producto "${p.name}"?`);
-          if (!confirm) return;
+      key: "sku",
+      header: "Acciones",
+      render: (p) => (
+        <div className="flex space-x-3">
+          <button
+            className="text-blue-600 hover:underline"
+            onClick={() => navigate(`/products/${p.sku}`)}
+          >
+            Editar
+          </button>
+          <button
+            className="text-red-600 hover:underline"
+            onClick={async () => {
+              const confirm = window.confirm(`¿Eliminar producto "${p.name}"?`);
+              if (!confirm) return;
 
-          try {
-            const token = await getAccessTokenSilently();
-            await deleteProductBySku(p.sku, token);
-            setProducts((prev) => prev.filter((prod) => prod.sku !== p.sku));
-          } catch (err) {
-            console.error("Error deleting product", err);
-            alert("Error eliminando el producto");
-          }
-        }}
-      >
-        Eliminar
-      </button>
-    </div>
-  ),
-}
+              try {
+                const token = await getAccessTokenSilently();
+                await deleteProductBySku(p.sku, token);
+                setProducts((prev) =>
+                  prev.filter((prod) => prod.sku !== p.sku)
+                );
+              } catch (err) {
+                console.error("Error deleting product", err);
+                alert("Error eliminando el producto");
+              }
+            }}
+          >
+            Eliminar
+          </button>
+        </div>
+      ),
+    },
   ];
 
   return (

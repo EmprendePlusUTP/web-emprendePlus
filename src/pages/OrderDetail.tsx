@@ -1,3 +1,5 @@
+/** @format */
+
 // src/pages/OrderDetail.tsx
 import { useParams, useNavigate } from "react-router-dom";
 
@@ -10,15 +12,23 @@ export default function OrderDetail() {
     <div className="space-y-4 max-w-lg">
       <button
         onClick={() => navigate(-1)}
-        className="text-blue-600 hover:underline"
+        className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
       >
         ← Volver
       </button>
       <h1 className="text-xl font-semibold">Detalle Pedido #{id}</h1>
-      <p><strong>Cliente:</strong> Ana Pérez</p>
-      <p><strong>Fecha:</strong> 2025-04-25</p>
-      <p><strong>Total:</strong> $59.99</p>
-      <p><strong>Estado:</strong> Pendiente</p>
+      <p>
+        <strong>Cliente:</strong> Ana Pérez
+      </p>
+      <p>
+        <strong>Fecha:</strong> 2025-04-25
+      </p>
+      <p>
+        <strong>Total:</strong> $59.99
+      </p>
+      <p>
+        <strong>Estado:</strong> Pendiente
+      </p>
 
       <h2 className="text-lg font-medium mt-4">Productos</h2>
       <ul className="list-disc ps-5 space-y-1">

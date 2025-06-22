@@ -1,5 +1,5 @@
 // src/services/productService.ts
-import { Product } from "../components/ProductCard";
+import { ProductDetails } from "../hooks/useProductDetails";
 
 export async function fetchProducts(token: string) {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/`, {
@@ -15,7 +15,7 @@ export async function fetchProducts(token: string) {
   return await res.json();
 }
 
-export async function fetchProductBySku(sku: string, token: string): Promise<Product> {
+export async function fetchProductBySku(sku: string, token: string): Promise<ProductDetails> {
   const res = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${encodeURIComponent(sku)}`, {
     headers: {
       Authorization: `Bearer ${token}`,

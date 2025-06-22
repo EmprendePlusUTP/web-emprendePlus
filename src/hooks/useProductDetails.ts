@@ -4,12 +4,12 @@ import { Product } from "../components/ProductCard";
 import { fetchProductBySku } from "../services/productServices";
 
 export type ProductDetails = {
- sku: string;
+  sku: string;
   name: string;
   slug: string;
   description: string;
   category: string;
-  type:string;
+  type: string;
   tags: string[];
   sale_price: number;
   cost: number;
@@ -19,15 +19,16 @@ export type ProductDetails = {
   supplier: string;
   status: "active" | "draft" | "archived";
   color: string;
-  width: number; 
+  width: number;
   height: number;
-  depth: number ;
+  depth: number;
   weight: number;
   tax_rate: number;
   created_at: string;
   updated_at: string;
   rating?: number;
-}
+  imageUrl?: string;
+};
 
 
 export function useProductDetails(sku: string) {

@@ -1,5 +1,7 @@
+/** @format */
+
 // src/pages/ProductPage.tsx
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -7,15 +9,13 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { Pencil } from "lucide-react";
 import { fetchProductBySku } from "../services/productServices";
 import { ProductDetails } from "../hooks/useProductDetails";
- 
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = id === "new";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  
-  
+
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
   const {
     register,
@@ -29,21 +29,31 @@ export default function ProductDetail() {
   const [nameValue, setNameValue] = useState("");
   const [skuValue, setSkuValue] = useState("");
   const { getAccessTokenSilently } = useAuth0();
-  type Product = ProductDetails & { imageUrl?: string };
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<ProductDetails | null>(null);
 
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
-      if (!isNew && id) {
-        const token = await getAccessTokenSilently();
-        const product = await fetchProductBySku(id, token);
-        setNameValue(product.name);
-        setSkuValue(product.sku);
-        setPreviewUrl(product.imageUrl);
-        reset(product);
-        setLoading(false);
-      } else {
+      if (!isNew && id && !hasFetchedRef.current) {
+        hasFetchedRef.current = true;
+
+        try {
+          const token = await getAccessTokenSilently();
+          const product: ProductDetails = await fetchProductBySku(id, token);
+
+          setProduct(product); // ✅ usar solo esto
+          setNameValue(product.name);
+          setSkuValue(product.sku);
+          setPreviewUrl(product.imageUrl); // ✅ imageUrl existe en ProductDetails
+          reset(product); // ✅ cargar datos en el formulario
+        } catch (e) {
+          console.error("❌ Error cargando producto", e);
+        } finally {
+          setLoading(false);
+        }
+      } else if (isNew && !hasFetchedRef.current) {
+        hasFetchedRef.current = true;
         reset({
           sku: "",
           name: "",
@@ -64,6 +74,7 @@ export default function ProductDetail() {
           created_at: "",
           updated_at: "",
           rating: 0,
+          imageUrl: "", // ✅ opcional si quieres mantener consistencia
         });
         setEditingName(true);
         setNameValue("");
@@ -72,61 +83,65 @@ export default function ProductDetail() {
         setLoading(false);
       }
     };
+
     load();
   }, [id, isNew, getAccessTokenSilently, reset]);
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setPreviewUrl(URL.createObjectURL(file));
-  }, []);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) setPreviewUrl(URL.createObjectURL(file));
+    },
+    []
+  );
 
   const onSubmit = async (data: ProductDetails) => {
-  try {
-    const token = await getAccessTokenSilently({
-      authorizationParams: {
-        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        scope: "openid profile email",
-      },
-    });
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: "openid profile email",
+        },
+      });
 
-    const payload = {
-      sku: data.sku,
-      type: data.type,
-      cost: data.cost,
-      name: data.name,
-      sale_price: data.sale_price,
-      stock: data.stock,
-    };
+      const payload = {
+        sku: data.sku,
+        type: data.type,
+        cost: data.cost,
+        name: data.name,
+        sale_price: data.sale_price,
+        stock: data.stock,
+      };
 
-    const method = isNew ? "POST" : "PATCH";
-    const url = isNew
-      ? "http://localhost:8000/api/products/"
-      : `http://localhost:8000/api/products/${skuValue}`;
+      const method = isNew ? "POST" : "PATCH";
+      const url = isNew
+        ? "http://localhost:8000/api/products/"
+        : `http://localhost:8000/api/products/${skuValue}`;
 
-    console.log("🚀 Payload enviado al backend:", payload);
+      console.log("🚀 Payload enviado al backend:", payload);
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error response:", errorText);
-      throw new Error("Error al guardar el producto");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error("Error al guardar el producto");
+      }
+
+      const result = await response.json();
+      console.log("Producto guardado:", result);
+      navigate("/products");
+    } catch (err) {
+      console.error(err);
+      alert("Hubo un error al guardar el producto.");
     }
-
-    const result = await response.json();
-    console.log("Producto guardado:", result);
-    navigate("/products");
-  } catch (err) {
-    console.error(err);
-    alert("Hubo un error al guardar el producto.");
-  }
   };
 
   if (loading) return <p>Cargando...</p>;
@@ -136,7 +151,7 @@ export default function ProductDetail() {
     <div className="max-w-6xl mx-auto bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
       <button
         onClick={() => navigate(-1)}
-        className="text-blue-600 hover:underline mb-4"
+        className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
       >
         ← Volver
       </button>
@@ -160,7 +175,10 @@ export default function ProductDetail() {
           </h1>
         )}
         {!editingName && (
-          <span onClick={() => setEditingName(true)} className="cursor-pointer text-gray-500 dark:text-gray-200 dark:hover:text-gray-400">
+          <span
+            onClick={() => setEditingName(true)}
+            className="cursor-pointer text-gray-500 dark:text-gray-200 dark:hover:text-gray-400"
+          >
             <Pencil />
           </span>
         )}
@@ -379,4 +397,3 @@ export default function ProductDetail() {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 /** @format */
 
 // src/pages/FinancesPage.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -13,11 +13,7 @@ import {
 import { MonthlyTrendsChart } from "../components/Finances/MonthlyTrendsChart";
 import { FinanceSummaryCard } from "../components/Finances/FinanceSummaryCard";
 import { TransactionsTable } from "../components/Finances/TransactionsTable";
-import {
-  BarRaceData,
-  useKeyframes,
-  type Keyframe,
-} from "../hooks/useKeyframes";
+import { BarRaceData, useKeyframes } from "../hooks/useKeyframes";
 
 import { FinanceCreate, FinanceRead } from "../types/financeTypes";
 import {
@@ -29,6 +25,7 @@ import Modal from "../components/Modal";
 import ChartCard from "../components/ChartCard";
 import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
 import { fetchSales } from "../services/salesServices";
+import LoadingPulse from "../components/LoadingPulse";
 
 export const FinancesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -40,42 +37,43 @@ export const FinancesPage: React.FC = () => {
   const [selectedSim, setSelectedSim] = useState<"bar" | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const hasFetchedRef = useRef(false); // ✅ Esto va fuera del useEffect
+
   useEffect(() => {
-    (async () => {
+    const load = async () => {
+      if (hasFetchedRef.current) return;
+      hasFetchedRef.current = true;
+
       setLoading(true);
-      const token = await getAccessTokenSilently();
+      try {
+        const token = await getAccessTokenSilently();
 
-      // 1a) finanzas
-      const finData = await fetchFinances(token);
-      setTransactions(finData);
+        // Finanzas
+        const finData = await fetchFinances(token);
+        setTransactions(finData);
 
-      // 1b) ventas para los keyframes
-      const sales = await fetchSales(token); // SaleFromAPI[]
-      const barData: BarRaceData[] = [];
-      sales.forEach((sale) => {
-        sale.sale_products.forEach((sp) => {
-          barData.push({
-            date: sale.sale_date,
-            name: sp.product_name || sp.product_id,
-            value: sp.quantity,
-            category: undefined,
+        // Ventas para gráficas
+        const sales = await fetchSales(token);
+        const barData: BarRaceData[] = [];
+        sales.forEach((sale) => {
+          sale.sale_products.forEach((sp) => {
+            barData.push({
+              date: sale.sale_date,
+              name: sp.product_name || sp.product_id,
+              value: sp.quantity,
+              category: undefined,
+            });
           });
         });
-      });
-      setBarRaceData(barData);
+        setBarRaceData(barData);
+      } catch (err) {
+        console.error("Error en carga inicial de FinancesPage:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setLoading(false);
-    })();
-  }, [getAccessTokenSilently]);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const token = await getAccessTokenSilently();
-      const data = await fetchFinances(token);
-      setTransactions(data);
-      setLoading(false);
-    })();
+    load();
   }, [getAccessTokenSilently]);
 
   const handleAddTransaction = async (tx: Transaction) => {
@@ -119,7 +117,14 @@ export const FinancesPage: React.FC = () => {
 
   const keyframes = useKeyframes(barRaceData, 8);
 
-  if (loading) return <p className="text-gray-200">Cargando finanzas…</p>;
+  if (loading)
+    return (
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
+    );
 
   return (
     <div className="container mx-auto p-6">
