@@ -1,80 +1,129 @@
-// src/components/finances/FinancesPage.tsx
-import { useMemo, useState } from "react";
+/** @format */
+
+// src/pages/FinancesPage.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import { ArrowUpCircle, ArrowDownCircle, BarChart2 } from "lucide-react";
 import {
   AddTransactionForm,
   Transaction,
 } from "../components/Finances/AddTransactionForm";
-import {
-  MonthlyData,
-  MonthlyTrendsChart,
-} from "../components/Finances/MonthlyTrendsChart";
+import { MonthlyTrendsChart } from "../components/Finances/MonthlyTrendsChart";
 import { FinanceSummaryCard } from "../components/Finances/FinanceSummaryCard";
 import { TransactionsTable } from "../components/Finances/TransactionsTable";
-import Modal from "../components/Modal";
-import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
-import { useKeyframes, type Keyframe } from "../hooks/useKeyframes";
-import { dummyData } from "../components/DummyBarRaceData";
-import ChartCard from "../components/ChartCard";
+import {
+  BarRaceData,
+  useKeyframes,
+  type Keyframe,
+} from "../hooks/useKeyframes";
 
-export const Finances = () => {
-  const keyframes: Keyframe[] = useKeyframes(dummyData, 8);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  // Estado para el modal y simulación seleccionada
+import { FinanceCreate, FinanceRead } from "../types/financeTypes";
+import {
+  createFinance,
+  deleteFinance,
+  fetchFinances,
+} from "../services/financesServices";
+import Modal from "../components/Modal";
+import ChartCard from "../components/ChartCard";
+import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
+import { fetchSales } from "../services/salesServices";
+
+export const FinancesPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { getAccessTokenSilently } = useAuth0();
+
+  const [transactions, setTransactions] = useState<FinanceRead[]>([]);
+  const [barRaceData, setBarRaceData] = useState<BarRaceData[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedSim, setSelectedSim] = useState<"bar" | null>(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
-  const handleAddTransaction = (tx: Transaction) => {
-    setTransactions((prev) => [tx, ...prev]);
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+
+      // 1a) finanzas
+      const finData = await fetchFinances(token);
+      setTransactions(finData);
+
+      // 1b) ventas para los keyframes
+      const sales = await fetchSales(token); // SaleFromAPI[]
+      const barData: BarRaceData[] = [];
+      sales.forEach((sale) => {
+        sale.sale_products.forEach((sp) => {
+          barData.push({
+            date: sale.sale_date,
+            name: sp.product_name || sp.product_id,
+            value: sp.quantity,
+            category: undefined,
+          });
+        });
+      });
+      setBarRaceData(barData);
+
+      setLoading(false);
+    })();
+  }, [getAccessTokenSilently]);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+      const data = await fetchFinances(token);
+      setTransactions(data);
+      setLoading(false);
+    })();
+  }, [getAccessTokenSilently]);
+
+  const handleAddTransaction = async (tx: Transaction) => {
+    const token = await getAccessTokenSilently();
+    const fin: FinanceCreate = {
+      date: tx.date,
+      type: tx.type,
+      category: tx.category,
+      subcategory: tx.subcategory,
+      amount: tx.amount,
+      description: "",
+    };
+    const created = await createFinance(fin, token);
+    setTransactions((prev) => [created, ...prev]);
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((tx) => tx.id !== id));
+  const handleDeleteTransaction = async (id: string | number) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const numericId = typeof id === "string" ? parseInt(id, 10) : id;
+      await deleteFinance(numericId, token);
+      setTransactions((prev) => prev.filter((tx) => tx.id !== numericId));
+    } catch (err) {
+      console.error("Error eliminando transacción:", err);
+    }
   };
 
   const totals = useMemo(() => {
-    let income = 0;
-    let expense = 0;
-
+    let income = 0,
+      expense = 0;
     transactions.forEach((tx) => {
       if (tx.type === "income") income += tx.amount;
       else expense += tx.amount;
     });
-
-    const net = parseFloat((income - expense).toFixed(2));
     return {
       income: parseFloat(income.toFixed(2)),
       expense: parseFloat(expense.toFixed(2)),
-      net,
+      net: parseFloat((income - expense).toFixed(2)),
     };
   }, [transactions]);
 
-  const monthlyData: MonthlyData[] = useMemo(() => {
-    const agrupado: Record<string, { income: number; expense: number }> = {};
+  const keyframes = useKeyframes(barRaceData, 8);
 
-    transactions.forEach((tx) => {
-      const monthKey = tx.date.slice(0, 7);
-      if (!agrupado[monthKey]) agrupado[monthKey] = { income: 0, expense: 0 };
-      if (tx.type === "income") agrupado[monthKey].income += tx.amount;
-      else agrupado[monthKey].expense += tx.amount;
-    });
-
-    return Object.entries(agrupado)
-      .map(([month, vals]) => ({
-        month,
-        income: parseFloat(vals.income.toFixed(2)),
-        expense: parseFloat(vals.expense.toFixed(2)),
-        net: parseFloat((vals.income - vals.expense).toFixed(2)),
-      }))
-      .sort((a, b) => a.month.localeCompare(b.month));
-  }, [transactions]);
+  if (loading) return <p className="text-gray-200">Cargando finanzas…</p>;
 
   return (
-    <div>
-      {/* Botón Simulaciones */}
+    <div className="container mx-auto p-6">
+      {/* Simulaciones y detalles */}
       <div className="flex justify-end mb-4 gap-2">
         <button
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
@@ -90,7 +139,6 @@ export const Finances = () => {
         </button>
       </div>
 
-      {/* Modal de Simulaciones */}
       {showModal && (
         <Modal
           onClose={() => {
@@ -124,14 +172,7 @@ export const Finances = () => {
         </Modal>
       )}
 
-      {/* Título de la página */}
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-neutral-100">
-          Finanzas del Emprendimiento
-        </h1>
-      </header>
-
-      {/* 1. Resumen Ejecutivo */}
+      {/* Resumen Ejecutivo */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <FinanceSummaryCard
           title="Ingresos Totales"
@@ -159,12 +200,12 @@ export const Finances = () => {
         />
       </section>
 
-      {/* 2. Formulario para agregar transacciones */}
+      {/* Formulario de transacciones */}
       <section className="mb-8">
         <AddTransactionForm onAdd={handleAddTransaction} />
       </section>
 
-      {/* 3. Tabla de transacciones */}
+      {/* Tabla de transacciones */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-neutral-100 mb-4">
           Historial de Transacciones
@@ -172,15 +213,16 @@ export const Finances = () => {
         <TransactionsTable
           data={transactions}
           onDelete={handleDeleteTransaction}
+          itemsPerPage={5}
         />
       </section>
 
-      {/* 4. Gráfico de tendencias mensuales */}
+      {/* Gráfico de tendencias */}
       <section>
-        <MonthlyTrendsChart data={monthlyData} />
+        <MonthlyTrendsChart transactions={transactions} />
       </section>
     </div>
   );
 };
 
-export default Finances;
+export default FinancesPage;

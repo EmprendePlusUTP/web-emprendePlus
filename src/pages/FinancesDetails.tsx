@@ -1,8 +1,12 @@
+/** @format */
+
 // src/pages/FinancesDetails.tsx
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts/core";
 import { useNavigate } from "react-router-dom";
+import Modal from "../components/Modal";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import {
   TitleComponent,
@@ -10,12 +14,19 @@ import {
   LegendComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
+import { RadarChart } from "echarts/charts";
+
 import ChartCard from "../components/ChartCard";
 import SunburstChart from "../components/SunBurstChart";
 import { sunburstData } from "../data/SunburstData/sunburstData";
-import { RadarChart } from "echarts/charts";
 
-// 1) Registramos los componentes que necesitamos
+import { BudgetRead } from "../types/budgetTypes";
+
+import { FinanceRead } from "../types/financeTypes";
+import { fetchBudgets, upsertBudget } from "../services/budgetServices";
+import { fetchFinances } from "../services/financesServices";
+import { DataNode } from "../components/SunburstBase";
+
 echarts.use([
   TitleComponent,
   TooltipComponent,
@@ -23,79 +34,175 @@ echarts.use([
   RadarChart,
   CanvasRenderer,
 ]);
-// 2) Registramos el tema “dark”
 
-const FinancesDetails = () => {
-  // Detectar modo oscuro
+export const FinancesDetails: React.FC = () => {
+  const navigate = useNavigate();
+  const { getAccessTokenSilently } = useAuth0();
+
+  // ──────── estado de carga ────────
+  const [loading, setLoading] = useState(true);
+
+  // ─ presupuesto y finanzas ─
+  const [budgets, setBudgets] = useState<BudgetRead[]>([]);
+  const [finances, setFinances] = useState<FinanceRead[]>([]);
+
+  // ─── modal y edición ───
+  const [showBudget, setShowBudget] = useState(false);
+  const [editingBudgets, setEditingBudgets] = useState<BudgetRead[]>([]);
+
+  // al montar, traemos budgets y finances
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+      const [bData, fData] = await Promise.all([
+        fetchBudgets(token),
+        fetchFinances(token),
+      ]);
+      setBudgets(bData);
+      setEditingBudgets(bData);
+      setFinances(fData);
+      setLoading(false);
+    })();
+  }, [getAccessTokenSilently]);
+
+  // ───────── dark mode ─────────
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
     setIsDark(mq.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Indicadores (ejes del radar)
-  const indicators = useMemo(
-    () => [
-      { name: "Ventas", max: 6500 },
-      { name: "Administración", max: 16000 },
-      { name: "Tecnología de la Información", max: 30000 },
-      { name: "Atención al Cliente", max: 38000 },
-      { name: "Desarrollo", max: 52000 },
-      { name: "Mercadeo", max: 25000 },
-    ],
-    []
-  );
+  // ─── lógica de presupuesto (igual que antes) ───
+  const [newCategory, setNewCategory] = useState("");
+  const [newSubcategory, setNewSubcategory] = useState("");
+  const [newSubcategories, setNewSubcategories] = useState<string[]>([]);
+  const [newAmount, setNewAmount] = useState(0);
 
-  // Datos de ejemplo: presupuestado vs gastado
-  const budgetValues = [4200, 3000, 20000, 35000, 50000, 18000];
-  const spendingValues = [5000, 14000, 28000, 26000, 42000, 21000];
+  const categories = sunburstData.children?.map((n) => n.name) ?? [];
+  useEffect(() => {
+    const node = sunburstData.children?.find((n) => n.name === newCategory);
+    const subs = node?.children?.map((c) => c.name) ?? [];
+    setNewSubcategories(subs);
+    setNewSubcategory(subs[0] ?? "");
+  }, [newCategory]);
 
-  // Construir la opción para ECharts
+  // 2) Monta el DataNode dinámico para Sunburst
+  const sunburstDataDynamic = useMemo<DataNode>(() => {
+    const root: DataNode = { name: "MiFinanzas", children: [] };
+
+    // Agrupar por tipo: income → "Ingresos", expense → "Gastos"
+    ["income", "expense"].forEach((type) => {
+      const typeName = type === "income" ? "Ingresos" : "Gastos";
+      const grouping: Record<string, Record<string, number>> = {};
+
+      finances
+        .filter((f) => f.type === type)
+        .forEach((f) => {
+          const cat = f.category;
+          const sub = f.subcategory ?? "—";
+          grouping[cat] = grouping[cat] ?? {};
+          grouping[cat][sub] = (grouping[cat][sub] || 0) + f.amount;
+        });
+
+      const typeNode = {
+        name: typeName,
+        children: Object.entries(grouping).map(([cat, subs]) => ({
+          name: cat,
+          children: Object.entries(subs).map(([sub, val]) => ({
+            name: sub,
+            value: val,
+          })),
+        })),
+      };
+
+      root.children!.push(typeNode);
+    });
+
+    return root;
+  }, [finances]);
+
+  const handleSaveBudget = async (b: BudgetRead) => {
+    const token = await getAccessTokenSilently();
+    const updated = await upsertBudget(
+      { category: b.category, subcategory: b.subcategory, amount: b.amount },
+      token
+    );
+    setEditingBudgets((prev) =>
+      prev.map((x) => (x.id === updated.id ? updated : x))
+    );
+    setBudgets((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+  };
+
+  const handleAddBudget = async () => {
+    if (!newCategory || newAmount <= 0) return;
+    const token = await getAccessTokenSilently();
+    const created = await upsertBudget(
+      { category: newCategory, subcategory: newSubcategory, amount: newAmount },
+      token
+    );
+    setEditingBudgets((prev) => [...prev, created]);
+    setBudgets((prev) => [...prev, created]);
+    setNewCategory("");
+    setNewAmount(0);
+  };
+
+  // ───── datos dinámicos para el radar ─────
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const radarData = useMemo(() => {
+    return budgets.map((b) => {
+      const label = b.subcategory
+        ? `${b.category} – ${b.subcategory}`
+        : b.category;
+      const spending = finances
+        .filter(
+          (f) =>
+            f.type === "expense" &&
+            f.date.slice(0, 7) === currentMonth &&
+            f.category === b.category &&
+            f.subcategory === b.subcategory
+        )
+        .reduce((sum, f) => sum + f.amount, 0);
+      const max = Math.max(b.amount, spending);
+      return { label, budget: b.amount, spending, max };
+    });
+  }, [budgets, finances, currentMonth]);
+
+  // ─── opción de ECharts ───
   const option = useMemo<echarts.EChartsCoreOption>(
     () => ({
       backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
       title: {
         text: "Presupuesto vs Gastado",
         left: "center",
-        textStyle: {
-          color: isDark ? "#F3F4F6" : "#1F2937",
-        },
+        textStyle: { color: isDark ? "#F3F4F6" : "#1F2937" },
       },
-      tooltip: {
-        trigger: "item",
-      },
+      tooltip: { trigger: "item" },
       legend: {
         data: ["Presupuesto Asignado", "Gasto Real"],
         bottom: 0,
-        textStyle: {
-          color: isDark ? "#D1D5DB" : "#374151",
-        },
+        textStyle: { color: isDark ? "#D1D5DB" : "#374151" },
       },
       radar: {
-        indicator: indicators.map((ind) => ({
-          name: ind.name,
-          max: ind.max,
-        })),
+        indicator: radarData.map((d) => ({ name: d.label, max: d.max })),
         shape: "polygon",
         splitNumber: 5,
-        axisName: {
-          color: isDark ? "#E5E7EB" : "#4B5563",
-        },
+        axisName: { color: isDark ? "#E5E7EB" : "#4B5563" },
         splitLine: {
           lineStyle: {
             color: isDark
-              ? ["rgba(226,232,240, 0.15)"]
-              : ["rgba(156,163,175, 0.3)"],
+              ? ["rgba(226,232,240,0.15)"]
+              : ["rgba(156,163,175,0.3)"],
           },
         },
         splitArea: {
           areaStyle: {
             color: isDark
-              ? ["rgba(30,41,59,0.0)", "rgba(30,41,59,0.1)"]
-              : ["rgba(248,250,252,0.0)", "rgba(248,250,252,0.5)"],
+              ? ["rgba(30,41,59,0)", "rgba(30,41,59,0.1)"]
+              : ["rgba(248,250,252,0)", "rgba(248,250,252,0.5)"],
           },
         },
         axisLine: {
@@ -110,70 +217,173 @@ const FinancesDetails = () => {
           type: "radar",
           data: [
             {
-              value: budgetValues,
+              value: radarData.map((d) => d.budget),
               name: "Presupuesto Asignado",
-              areaStyle: {
-                opacity: 0.2,
-                color: isDark ? "#10B981" : "#10B981",
-              },
+              areaStyle: { opacity: 0.2, color: "#10B981" },
             },
             {
-              value: spendingValues,
+              value: radarData.map((d) => d.spending),
               name: "Gasto Real",
-              areaStyle: {
-                opacity: 0.2,
-                color: isDark ? "#EF4444" : "#EF4444",
-              },
+              areaStyle: { opacity: 0.2, color: "#EF4444" },
             },
           ],
-          lineStyle: {
-            width: 2,
-          },
-          emphasis: {
-            lineStyle: {
-              width: 3,
-            },
-          },
+          lineStyle: { width: 2 },
+          emphasis: { lineStyle: { width: 3 } },
         },
       ],
     }),
-    [isDark, indicators, budgetValues, spendingValues]
+    [isDark, radarData]
   );
 
-  const navigate = useNavigate();
+  // ─── render ───
+  if (loading)
+    return (
+      <div className="max-w-3xl mx-auto p-6 text-center">Cargando datos…</div>
+    );
 
   return (
     <div className="max-w-3xl mx-auto p-6 text-gray-800 dark:text-neutral-100">
-      <button
-        className="mb-4 px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 text-gray-800 dark:text-neutral-100 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
-        onClick={() => navigate(-1)}
-      >
-        ← Volver
-      </button>
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
+        >
+          ← Volver
+        </button>
+        <button
+          onClick={() => setShowBudget(true)}
+          className="ml-auto px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+        >
+          Ver/Editar Presupuesto
+        </button>
+      </div>
+
       <h1 className="text-2xl font-bold mb-4">Detalles de Finanzas</h1>
-      <p className="mb-4">
-        Aquí podrás ver un desglose detallado de tus finanzas, análisis
-        avanzados y más información relevante.
-      </p>
 
-      {/* Radar comparando presupuestado vs gastado */}
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mt-6 border border-gray-200 dark:border-neutral-700">
-        <ReactECharts
-          echarts={echarts}
-          option={option}
-          style={{ width: "100%", height: 400 }}
-          theme={isDark ? "dark" : undefined}
-        />
-      </div>
+      {/* Radar dinámico o mensaje si no hay presupuesto */}
+      <ChartCard>
+        {radarData.length > 0 ? (
+          <ReactECharts
+            echarts={echarts}
+            option={option}
+            style={{ width: "100%", height: 400 }}
+          />
+        ) : (
+          <p className="text-center py-20 text-gray-500">
+            No hay presupuesto definido para mostrar el gráfico.
+          </p>
+        )}
+      </ChartCard>
 
-      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mt-6 border border-gray-200 dark:border-neutral-700">
-        <h2 className="text-lg font-semibold mb-2">Próximamente</h2>
-        <p>Esta sección mostrará detalles avanzados de tus finanzas.</p>
+      {showBudget && (
+        <Modal onClose={() => setShowBudget(false)}>
+          <div className="space-y-4 text-gray-800 dark:text-gray-100">
+            <h2 className="text-xl font-semibold">Presupuesto</h2>
+            <table className="w-full table-auto border-collapse">
+              <thead>
+                <tr>
+                  <th className="border px-2 py-1">Categoría</th>
+                  <th className="border px-2 py-1">Subcategoría</th>
+                  <th className="border px-2 py-1 text-right">Monto</th>
+                  <th className="border px-2 py-1">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editingBudgets.map((b) => (
+                  <tr key={b.id}>
+                    <td className="border px-2 py-1">{b.category}</td>
+                    <td className="border px-2 py-1">{b.subcategory ?? "—"}</td>
+                    <td className="border px-2 py-1">
+                      <input
+                        type="number"
+                        value={b.amount}
+                        onChange={(e) =>
+                          setEditingBudgets((prev) =>
+                            prev.map((x) =>
+                              x.id === b.id
+                                ? { ...x, amount: parseFloat(e.target.value) }
+                                : x
+                            )
+                          )
+                        }
+                        className="w-full text-right border px-1 py-0.5 rounded"
+                      />
+                    </td>
+                    <td className="border px-2 py-1 text-center">
+                      <button
+                        onClick={() => handleSaveBudget(b)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Guardar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {editingBudgets.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="border px-2 py-4 text-center">
+                      No hay presupuesto definido aún.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
 
-        <ChartCard>
-          <SunburstChart data={sunburstData} />
-        </ChartCard>
-      </div>
+            {/* Añadir nuevo presupuesto */}
+            <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
+              <h3 className="font-medium mb-2">Agregar nueva categoría</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="border px-2 py-1 rounded bg-white dark:bg-neutral-700"
+                >
+                  <option value="">Categoría</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={newSubcategory}
+                  onChange={(e) => setNewSubcategory(e.target.value)}
+                  className="border px-2 py-1 rounded bg-white dark:bg-neutral-700"
+                  disabled={!newSubcategories.length}
+                >
+                  <option value="">Subcategoría</option>
+                  {newSubcategories.map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  value={newAmount}
+                  onChange={(e) => setNewAmount(parseFloat(e.target.value))}
+                  placeholder="Monto"
+                  className="border px-2 py-1 rounded bg-white dark:bg-neutral-700 text-right"
+                />
+                <button
+                  onClick={handleAddBudget}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Sunburst */}
+      <ChartCard className="mt-6">
+        <h2 className="text-lg font-semibold mb-2 text-gray-800 dark:text-neutral-100">
+          Detalle de Ingresos y Gastos
+        </h2>
+        <SunburstChart data={sunburstDataDynamic} />
+      </ChartCard>
     </div>
   );
 };
