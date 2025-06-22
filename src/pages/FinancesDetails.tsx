@@ -1,7 +1,7 @@
 /** @format */
 
 // src/pages/FinancesDetails.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import ReactECharts from "echarts-for-react";
 import * as echarts from "echarts/core";
 import { useNavigate } from "react-router-dom";
@@ -26,6 +26,7 @@ import { FinanceRead } from "../types/financeTypes";
 import { fetchBudgets, upsertBudget } from "../services/budgetServices";
 import { fetchFinances } from "../services/financesServices";
 import { DataNode } from "../components/SunburstBase";
+import LoadingPulse from "../components/LoadingPulse";
 
 echarts.use([
   TitleComponent,
@@ -41,6 +42,7 @@ export const FinancesDetails: React.FC = () => {
 
   // ──────── estado de carga ────────
   const [loading, setLoading] = useState(true);
+  const hasFetchedRef = useRef(false);
 
   // ─ presupuesto y finanzas ─
   const [budgets, setBudgets] = useState<BudgetRead[]>([]);
@@ -52,18 +54,28 @@ export const FinancesDetails: React.FC = () => {
 
   // al montar, traemos budgets y finances
   useEffect(() => {
-    (async () => {
+    const load = async () => {
+      if (hasFetchedRef.current) return;
+      hasFetchedRef.current = true;
+
       setLoading(true);
-      const token = await getAccessTokenSilently();
-      const [bData, fData] = await Promise.all([
-        fetchBudgets(token),
-        fetchFinances(token),
-      ]);
-      setBudgets(bData);
-      setEditingBudgets(bData);
-      setFinances(fData);
-      setLoading(false);
-    })();
+      try {
+        const token = await getAccessTokenSilently();
+        const [bData, fData] = await Promise.all([
+          fetchBudgets(token),
+          fetchFinances(token),
+        ]);
+        setBudgets(bData);
+        setEditingBudgets(bData);
+        setFinances(fData);
+      } catch (err) {
+        console.error("❌ Error cargando datos en FinancesDetails:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, [getAccessTokenSilently]);
 
   // ───────── dark mode ─────────
@@ -81,7 +93,6 @@ export const FinancesDetails: React.FC = () => {
   const [newSubcategory, setNewSubcategory] = useState("");
   const [newSubcategories, setNewSubcategories] = useState<string[]>([]);
   const [newAmount, setNewAmount] = useState(0);
-
   const categories = sunburstData.children?.map((n) => n.name) ?? [];
   useEffect(() => {
     const node = sunburstData.children?.find((n) => n.name === newCategory);
@@ -238,7 +249,11 @@ export const FinancesDetails: React.FC = () => {
   // ─── render ───
   if (loading)
     return (
-      <div className="max-w-3xl mx-auto p-6 text-center">Cargando datos…</div>
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
     );
 
   return (

@@ -6,7 +6,7 @@ import StatsCard from "../components/StatsCard";
 import DataTable from "../components/DataTable";
 import { Column } from "../components/BaseTable";
 import TableCard from "../components/TableCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SaleFromAPI, SaleProduct } from "../types/saleTypes";
 import { useAuth0 } from "@auth0/auth0-react";
 import { createSale, fetchSales } from "../services/salesServices";
@@ -14,6 +14,7 @@ import Modal from "../components/Modal";
 import { Product } from "../components/ProductCard"; // si ya tienes ese tipo
 import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
+import LoadingPulse from "../components/LoadingPulse";
 
 export default function Sales() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ export default function Sales() {
 
   const [allSales, setAllSales] = useState<SaleFromAPI[]>([]);
   const [salesByProduct, setSalesByProduct] = useState<SaleProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const handleCloseModal = () => {
     setShowCreateSale(false);
@@ -52,8 +54,10 @@ export default function Sales() {
 
   useEffect(() => {
     const load = async () => {
+      if (!isAuthenticated || hasFetchedRef.current) return;
+      hasFetchedRef.current = true;
+
       try {
-        if (!isAuthenticated) return;
         const token = await getAccessTokenSilently();
         const rawSales = await fetchSales(token);
 
@@ -72,11 +76,15 @@ export default function Sales() {
         setSalesByProduct(products);
       } catch (e) {
         console.error("Error loading sales", e);
+      } finally {
+        setLoading(false);
       }
     };
 
     load();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, getAccessTokenSilently]);
+
+  const hasFetchedRef = useRef(false);
 
   const salesColumns: Column<SaleFromAPI>[] = [
     { key: "id", header: "ID" },
@@ -127,6 +135,14 @@ export default function Sales() {
       render: (s) => new Date(s.date).toLocaleDateString(),
     },
   ];
+  if (loading)
+    return (
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
+    );
 
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
