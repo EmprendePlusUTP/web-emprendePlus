@@ -15,6 +15,7 @@ import { Product } from "../components/ProductCard"; // si ya tienes ese tipo
 import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
 import LoadingPulse from "../components/LoadingPulse";
+import { getPanamaISOString } from "../utils/localeTimeZone";
 
 export default function Sales() {
   const navigate = useNavigate();
@@ -292,7 +293,7 @@ export default function Sales() {
 
                   await createSale(
                     {
-                      sale_date: new Date().toISOString().split("T")[0],
+                      sale_date: getPanamaISOString(),
                       products: selectedProducts.map((p) => ({
                         product_id: p.sku,
                         quantity: p.quantity,

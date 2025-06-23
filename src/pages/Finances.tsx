@@ -37,8 +37,7 @@ export const FinancesPage: React.FC = () => {
   const [selectedSim, setSelectedSim] = useState<"bar" | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const hasFetchedRef = useRef(false); // ✅ Esto va fuera del useEffect
-
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
     const load = async () => {
       if (hasFetchedRef.current) return;

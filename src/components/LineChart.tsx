@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/LineChart.tsx
 import React, { useRef, useEffect } from "react";
 import {
@@ -14,6 +16,7 @@ import {
   bisector,
   pointer,
 } from "d3";
+import { localeEs } from "./types/chartFormatsTypes";
 
 export interface DataPoint {
   date: Date;
@@ -64,17 +67,17 @@ const LineChart: React.FC<LineChartProps> = ({
     const xAxisG = g
       .append("g")
       .attr("transform", `translate(0,${innerHeight})`)
-      .call(axisBottom(xScale).ticks(6));
+      .call(
+        axisBottom(xScale)
+          .ticks(6)
+          .tickFormat((d) => localeEs.format("%b")(d as Date))
+      );
     const yAxisG = g.append("g").call(axisLeft(yScale).ticks(5));
 
     // Hacer que ejes tomen el color de texto actual (tailwind "text-*" / dark:text-*)
     [xAxisG, yAxisG].forEach((axisG) => {
-      axisG
-        .selectAll("path, line")
-        .attr("stroke", "currentColor");
-      axisG
-        .selectAll("text")
-        .attr("fill", "currentColor");
+      axisG.selectAll("path, line").attr("stroke", "currentColor");
+      axisG.selectAll("text").attr("fill", "currentColor");
     });
 
     // área bajo la curva
@@ -123,24 +126,17 @@ const LineChart: React.FC<LineChartProps> = ({
       .on("mousemove", (event) => {
         const [mx] = pointer(event, svg.node());
         const x0 = xScale.invert(mx - margin.left);
-        const i = bisector<DataPoint, Date>((d) => d.date).left(
-          data,
-          x0,
-          1
-        );
+        const i = bisector<DataPoint, Date>((d) => d.date).left(data, x0, 1);
         const d0 = data[i - 1],
           d1 = data[i];
         const dClosest =
           !d1 ||
-          x0.getTime() - d0.date.getTime() <
-            d1.date.getTime() - x0.getTime()
+          x0.getTime() - d0.date.getTime() < d1.date.getTime() - x0.getTime()
             ? d0
             : d1;
         tooltipG.attr(
           "transform",
-          `translate(${xScale(dClosest.date)},${yScale(
-            dClosest.value
-          )})`
+          `translate(${xScale(dClosest.date)},${yScale(dClosest.value)})`
         );
         tooltipText.text(dClosest.value.toString());
       });

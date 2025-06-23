@@ -1,7 +1,8 @@
+/** @format */
+
 // src/components/Finances/AddTransactionForm.tsx
 import React, { useState, useEffect } from "react";
 import { sunburstData } from "../../data/SunburstData/sunburstData";
-
 
 export type TransactionType = "income" | "expense";
 
@@ -24,15 +25,19 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
   const [subcategory, setSubcategory] = useState<string>("");
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [amount, setAmount] = useState<number>(0);
-  const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState<string>(() => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    return now.toISOString().slice(0, 16);
+  });
 
   // Lista de categorías principales (protege si children es undefined)
-  const categories = sunburstData.children?.map(node => node.name) ?? [];
+  const categories = sunburstData.children?.map((node) => node.name) ?? [];
 
   // Cuando cambia la categoría, actualizamos subcategorías
   useEffect(() => {
-    const node = sunburstData.children?.find(n => n.name === category);
-    const subs = node?.children?.map(c => c.name) ?? [];
+    const node = sunburstData.children?.find((n) => n.name === category);
+    const subs = node?.children?.map((c) => c.name) ?? [];
     setSubcategories(subs);
     setSubcategory(subs[0] ?? "");
   }, [category]);
@@ -75,7 +80,7 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
           </label>
           <select
             value={type}
-            onChange={e => setType(e.target.value as TransactionType)}
+            onChange={(e) => setType(e.target.value as TransactionType)}
             className="w-full border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-800 dark:text-white focus:ring-blue-200 focus:border-blue-200"
           >
             <option value="income">Ingreso</option>
@@ -90,12 +95,14 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
           </label>
           <select
             value={category}
-            onChange={e => setCategory(e.target.value)}
+            onChange={(e) => setCategory(e.target.value)}
             className="w-full border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-800 dark:text-white focus:ring-blue-200 focus:border-blue-200"
             required
           >
-            <option value="" disabled>Selecciona categoría</option>
-            {categories.map(cat => (
+            <option value="" disabled>
+              Selecciona categoría
+            </option>
+            {categories.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
@@ -110,15 +117,17 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
           </label>
           <select
             value={subcategory}
-            onChange={e => setSubcategory(e.target.value)}
+            onChange={(e) => setSubcategory(e.target.value)}
             className="w-full border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-800 dark:text-white focus:ring-blue-200 focus:border-blue-200"
             required
             disabled={subcategories.length === 0}
           >
             <option value="" disabled>
-              {subcategories.length === 0 ? "Elige categoría primero" : "Selecciona subcategoría"}
+              {subcategories.length === 0
+                ? "Elige categoría primero"
+                : "Selecciona subcategoría"}
             </option>
-            {subcategories.map(sub => (
+            {subcategories.map((sub) => (
               <option key={sub} value={sub}>
                 {sub}
               </option>
@@ -134,7 +143,7 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
           <input
             type="number"
             value={amount}
-            onChange={e => setAmount(parseFloat(e.target.value))}
+            onChange={(e) => setAmount(parseFloat(e.target.value))}
             min="0"
             step="0.01"
             className="w-full border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-800 dark:text-white focus:ring-blue-200 focus:border-blue-200"
@@ -148,9 +157,9 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
             Fecha
           </label>
           <input
-            type="date"
+            type="datetime-local"
             value={date}
-            onChange={e => setDate(e.target.value)}
+            onChange={(e) => setDate(e.target.value)}
             className="w-full border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-800 dark:text-white focus:ring-blue-200 focus:border-blue-200"
             required
           />
