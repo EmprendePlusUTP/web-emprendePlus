@@ -1,154 +1,215 @@
 /** @format */
 
-// src/pages/Dashboard.tsx
+import { useEffect, useRef, useState } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
+
 import ChangeBadge from "../components/ChangeBadge";
 import ChartCard from "../components/ChartCard";
-import DataTable from "../components/DataTable";
-import { Column } from "../components/BaseTable";
-import GroupedBarChart, { MonthlyData } from "../components/GroupedBarChart";
-import LineChart, { DataPoint } from "../components/LineChart";
 import StatsCard from "../components/StatsCard";
-import TableCard from "../components/TableCard";
+import ProductWordCloud from "../components/ProductWordCloud";
+import MonthlyGoalGauge from "../components/MonthlyGoalGauge";
+import SalesHeatmap from "../components/SalesHeatmap";
+import GroupedBarChart from "../components/GroupedBarChart";
+import LineChart, { DataPoint } from "../components/LineChart";
+import LoadingPulse from "../components/LoadingPulse";
+
+import { DashboardStats, WordCloudItem } from "../types/dashboardTypes";
+import {
+  fetchDashboardStats,
+  fetchMonthlySales,
+  fetchSalesHeatmapData,
+  fetchStarProduct,
+  fetchStarProductComparison,
+  fetchWordCloudData,
+  StarProductResponse,
+} from "../services/dashboardServices";
+import { MonthlyData } from "../components/types/comparisonChartTypes";
 
 export default function Dashboard() {
-  const starProductSales: MonthlyData[] = [
-    { month: "Jan", primary: 1500, secondary: 2233 },
-    { month: "Feb", primary: 1800, secondary: 4332 },
-    { month: "Mar", primary: 2100, secondary: 562 },
-    { month: "Apr", primary: 1700, secondary: 324 },
-    { month: "May", primary: 2200, secondary: 5465 },
-    { month: "Jun", primary: 2000, secondary: 231 },
-    { month: "Jul", primary: 2400, secondary: 2343 },
-    { month: "Aug", primary: 2300, secondary: 2343 },
-    { month: "Sep", primary: 2500, secondary: 5456 },
-    { month: "Oct", primary: 2700, secondary: 114 },
-    { month: "Nov", primary: 2600, secondary: 3142 },
-    { month: "Dec", primary: 3000, secondary: 4335 },
-  ];
-  const monthlySales: DataPoint[] = [
-    { date: new Date(2025, 0, 1), value: 12000 },
-    { date: new Date(2025, 1, 1), value: 15000 },
-    { date: new Date(2025, 2, 1), value: 18000 },
-    { date: new Date(2025, 3, 1), value: 14000 },
-    { date: new Date(2025, 4, 1), value: 20000 },
-    { date: new Date(2025, 5, 1), value: 22000 },
-  ];
-  // --- 1. Métricas de alto nivel ---
-  const stats = [
-    {
-      title: "Ingresos totales",
-      tooltip: "Ingresos generados en el mes",
-      value: "$34,782",
-      change: "12.5",
-    },
-    {
-      title: "Órdenes totales",
-      tooltip: "Órdenes recibidas este mes",
-      value: "1,245",
-    },
-    {
-      title: "Clientes nuevos",
-      tooltip: "Nuevos compradores este mes",
-      value: "342",
-      change: "8.1",
-    },
-    {
-      title: "Tasa de conversión",
-      tooltip: "Visitas que terminan en compra",
-      value: "3.8%",
-      change: "-0.4",
-    },
-  ];
+  const { getAccessTokenSilently } = useAuth0();
 
-  // --- 2. Definición de la tabla de pedidos ---
-  type Order = {
-    orderId: string;
-    customer: string;
-    total: string;
-    status: string;
-    date: string;
-  };
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [wordcloudData, setWordcloudData] = useState<WordCloudItem[]>([]);
+  const [monthlySales, setMonthlySales] = useState<DataPoint[]>([]);
+  const [heatmapData, setHeatmapData] = useState<number[][]>([]);
+  const [loading, setLoading] = useState(true);
+  const [starData, setStarProductSales] = useState<MonthlyData[]>([]);
+  const [starProduct, setStarProduct] = useState<StarProductResponse | null>(
+    null
+  );
+  const [monthlyChange, setMonthlyChange] = useState<{
+    total: number;
+    change: number;
+  }>({
+    total: 0,
+    change: 0,
+  });
 
-  const orderColumns: Column<Order>[] = [
-    { key: "orderId", header: "ID Orden" },
-    { key: "customer", header: "Cliente" },
-    { key: "total", header: "Total" },
-    { key: "status", header: "Estado" },
-    { key: "date", header: "Fecha" },
-  ];
+  const hasFetchedRef = useRef(false);
 
-  const orders: Order[] = [
-    {
-      orderId: "#1001",
-      customer: "Ana Gómez",
-      total: "$128.50",
-      status: "Completada",
-      date: "2025-04-20",
-    },
-    {
-      orderId: "#1002",
-      customer: "Luis Pérez",
-      total: "$76.00",
-      status: "Pendiente",
-      date: "2025-04-21",
-    },
-    {
-      orderId: "#1003",
-      customer: "María Ruiz",
-      total: "$210.99",
-      status: "Envío",
-      date: "2025-04-22",
-    },
-    {
-      orderId: "#1004",
-      customer: "Carlos Díaz",
-      total: "$45.00",
-      status: "Cancelada",
-      date: "2025-04-22",
-    },
-    {
-      orderId: "#1005",
-      customer: "Sofía Torres",
-      total: "$99.99",
-      status: "Completada",
-      date: "2025-04-23",
-    },
-  ];
+  useEffect(() => {
+    const load = async () => {
+      if (hasFetchedRef.current) return;
+      hasFetchedRef.current = true;
+
+      setLoading(true);
+      try {
+        const token = await getAccessTokenSilently();
+
+        const [
+          statsData,
+          cloudData,
+          salesData,
+          heatmapData,
+          starData,
+          starProductData,
+        ] = await Promise.all([
+          fetchDashboardStats(token),
+          fetchWordCloudData(token),
+          fetchMonthlySales(token),
+          fetchSalesHeatmapData(token),
+          fetchStarProductComparison(token),
+          fetchStarProduct(token),
+        ]);
+
+        setStats(statsData);
+        setWordcloudData(cloudData);
+        setMonthlySales(salesData);
+        setHeatmapData(heatmapData);
+        setStarProductSales(starData);
+        setStarProduct(starProductData);
+
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+
+        const currentMonthSales = salesData.filter(
+          (d) =>
+            d.date.getMonth() === currentMonth &&
+            d.date.getFullYear() === currentYear
+        );
+        const previousMonthSales = salesData.filter(
+          (d) =>
+            d.date.getMonth() ===
+              (currentMonth === 0 ? 11 : currentMonth - 1) &&
+            d.date.getFullYear() ===
+              (currentMonth === 0 ? currentYear - 1 : currentYear)
+        );
+
+        const currentTotal = currentMonthSales.reduce(
+          (sum, d) => sum + d.value,
+          0
+        );
+        const previousTotal = previousMonthSales.reduce(
+          (sum, d) => sum + d.value,
+          0
+        );
+
+        const changePercent =
+          previousTotal === 0
+            ? 100
+            : ((currentTotal - previousTotal) / previousTotal) * 100;
+
+        setMonthlySales(salesData);
+        setMonthlyChange({ total: currentTotal, change: changePercent });
+      } catch (err) {
+        console.error("Error cargando dashboard:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [getAccessTokenSilently]);
+
+  if (loading) {
+    return (
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="p-6 text-red-600 text-center font-semibold">
+        Error al cargar los datos del dashboard.
+      </div>
+    );
+  }
+
+  // Calculate overallTotal from monthlySales
+  const overallTotal = monthlySales.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <div className="flex flex-col gap-6">
-      {/* --- Métricas rápidas --- */}
-      <div className="grid xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((s, i) => (
-          <StatsCard key={i} {...s} />
-        ))}
+      <div className="grid xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <StatsCard
+          title="Ingresos totales"
+          tooltip="Ingresos generados en el mes"
+          value={
+            typeof stats.total_revenue === "number"
+              ? `$${stats.total_revenue.toLocaleString()}`
+              : "No disponible"
+          }
+          change={stats.revenue_change.toString()}
+        />
+        <StatsCard
+          title="Órdenes totales"
+          tooltip="Órdenes recibidas este mes"
+          value={
+            typeof stats.total_orders === "number"
+              ? `${stats.total_orders.toLocaleString()}`
+              : "No disponible"
+          }
+        />
+        <StatsCard
+          title="Crecimiento de ventas"
+          tooltip="Comparación de ingresos respecto al mes anterior"
+          value={
+            typeof stats.growth_rate === "number"
+              ? `${stats.growth_rate.toLocaleString()}%`
+              : "No disponible"
+          }
+          change={stats.growth_change.toString()}
+        />
       </div>
+      {/* Gráficos principales */}
       <div className="grid sm:grid-cols-1 md:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-        {/* --- Gráfico de ventas mensuales --- */}
         <ChartCard
           title="Ventas mensuales"
-          value="$34,782"
-          changeBadge={<ChangeBadge percent={12.5} />}
+          value={`$${overallTotal.toLocaleString(undefined, {
+            maximumFractionDigits: 2,
+          })}`}
+          changeBadge={<ChangeBadge percent={monthlyChange.change} />}
         >
           <LineChart data={monthlySales} />
         </ChartCard>
+
         <ChartCard
-          title="Producto Estrella: Gorra"
-          value="$34,782"
-          changeBadge={<ChangeBadge percent={12.5} />}
+          title={`Producto Estrella: ${starProduct?.name}`}
+          value={`$${starProduct?.total_value.toLocaleString("es-PA")}`}
         >
-          <GroupedBarChart data={starProductSales} />
+          <GroupedBarChart
+            data={starProduct?.monthly_comparison ?? []}
+            firstDataTitle="Producto estrella"
+            secondDataTitle="Promedio general"
+          />
         </ChartCard>
       </div>
-
-      {/* --- Tabla de pedidos recientes --- */}
-      <TableCard>
-        <DataTable
-          columns={orderColumns}
-          data={orders}
-          title="Órdenes Recientes"
-        />
-      </TableCard>
+      {/* Visualizaciones complementarias */}
+      <div className="grid xl:grid-cols-3 gap-4 sm:gap-6">
+        <ChartCard title="Productos más vendidos (Nube)">
+          <ProductWordCloud words={wordcloudData} />
+        </ChartCard>
+        <ChartCard title="Progreso hacia la meta mensual">
+          <MonthlyGoalGauge current={stats.total_revenue} goal={320} />
+        </ChartCard>
+        <ChartCard title="Actividad por día y hora">
+          <SalesHeatmap data={heatmapData} startHour={8} endHour={20} />
+        </ChartCard>
+      </div>
     </div>
   );
 }

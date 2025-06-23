@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/GroupedBarChart.tsx
 import React, { useRef, useEffect } from "react";
 import {
@@ -127,6 +129,37 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({
     [xAxisG, yAxisG].forEach((axisG) => {
       axisG.selectAll("path, line").attr("stroke", "currentColor");
       axisG.selectAll("text").attr("fill", "currentColor");
+    });
+
+    const legend = svg
+      .append("g")
+      .attr("transform", `translate(${margin.left}, 0)`);
+
+    const legendItems = [
+      { label: firstDataTitle, color: colors.primary },
+      { label: secondDataTitle, color: colors.secondary },
+    ];
+
+    legendItems.forEach((item, index) => {
+      const itemGroup = legend
+        .append("g")
+        .attr("transform", `translate(${index * 150}, 0)`);
+
+      itemGroup
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", item.color);
+
+      itemGroup
+        .append("text")
+        .attr("x", 18)
+        .attr("y", 10)
+        .attr("fill", "currentColor")
+        .style("font-size", "12px")
+        .text(item.label);
     });
 
     // cleanup tooltip on unmount

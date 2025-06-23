@@ -1,9 +1,13 @@
+/** @format */
+
 // src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "preline/dist/preline.js";
 import "./styles.css";
+import "tippy.js/dist/tippy.css";
+import "tippy.js/animations/scale.css";
 import { Auth0Provider } from "@auth0/auth0-react";
 
 // Lee las vars de entorno (con Vite deben ir prefijadas con VITE_)
@@ -19,7 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       authorizationParams={{
         redirect_uri: redirectUri,
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        scope: "openid profile email", 
+        scope: "openid profile email",
       }}
       useRefreshTokens={true}
       cacheLocation="localstorage"
