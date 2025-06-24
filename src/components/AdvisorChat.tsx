@@ -1,11 +1,13 @@
+/** @format */
+
 // src/components/AdvisorChat.tsx
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useUserContext } from "../contexts/UserContext";
 import { askAdvisor } from "../services/advisor";
 import ModaldoFace from "./ModaldoFace";
 import ChatInput from "./ChatInput";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -15,7 +17,6 @@ interface Message {
 const STORAGE_KEY = "advisor_chat_messages";
 
 export const AdvisorChat: React.FC = React.memo(() => {
-  const ctx = useUserContext();
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : [];
@@ -34,30 +35,24 @@ export const AdvisorChat: React.FC = React.memo(() => {
     }
   }, [messages]);
 
+  const { getAccessTokenSilently } = useAuth0();
+
   const send = async (content: string) => {
     if (!content.trim() || loading) return;
     const userMsg: Message = { role: "user", content };
     setMessages((ms) => [...ms, userMsg]);
     setLoading(true);
     try {
-      const reply = await askAdvisor({
-        user_id: ctx.userId,
-        user_name: ctx.userName,
-        business_name: ctx.businessName,
-        currency: ctx.currency,
-        sales_history: Object.fromEntries(
-          ctx.salesHistory.map(({ date, revenue }) => [date, revenue])
-        ),
-        top_product: ctx.topProduct.name,
-        product_list: ctx.productList.map((p) => ({
-          id: p.id,
-          name: p.name,
-          monthly_sales: p.monthlySales,
-          supplier: p.supplier,
-          stock: p.stock,
-        })),
-        message: content,
-      });
+      const lastTurns = 3;
+      const lastMessages = messages.slice(-lastTurns * 2).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const token = await getAccessTokenSilently();
+      const reply = await askAdvisor(
+        { message: content, history: lastMessages },
+        token
+      );
       setMessages((ms) => [...ms, { role: "assistant", content: reply }]);
     } catch {
       setMessages((ms) => [
@@ -68,6 +63,21 @@ export const AdvisorChat: React.FC = React.memo(() => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleReset = () => {
+      setMessages([
+        {
+          role: "assistant",
+          content: "Hola, ¿en qué puedo ayudarte hoy?",
+        },
+      ]);
+    };
+    window.addEventListener("advisor-chat-reset", handleReset);
+    return () => {
+      window.removeEventListener("advisor-chat-reset", handleReset);
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-neutral-800 shadow-lg rounded-lg">
@@ -114,6 +124,7 @@ export const AdvisorChat: React.FC = React.memo(() => {
         ))}
         <div ref={scrollRef} />
       </div>
+
       <ChatInput onSend={send} loading={loading} />
     </div>
   );
