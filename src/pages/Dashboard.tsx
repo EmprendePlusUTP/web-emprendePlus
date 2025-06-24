@@ -131,14 +131,6 @@ export default function Dashboard() {
     );
   }
 
-  if (!stats) {
-    return (
-      <div className="p-6 text-red-600 text-center font-semibold">
-        Error al cargar los datos del dashboard.
-      </div>
-    );
-  }
-
   // Calculate overallTotal from monthlySales
   const overallTotal = monthlySales.reduce((sum, d) => sum + d.value, 0);
 
@@ -149,17 +141,17 @@ export default function Dashboard() {
           title="Ingresos totales"
           tooltip="Ingresos generados en el mes"
           value={
-            typeof stats.total_revenue === "number"
+            typeof stats?.total_revenue === "number"
               ? `$${stats.total_revenue.toLocaleString()}`
               : "No disponible"
           }
-          change={stats.revenue_change.toString()}
+          change={stats?.revenue_change.toString()}
         />
         <StatsCard
           title="Órdenes totales"
           tooltip="Órdenes recibidas este mes"
           value={
-            typeof stats.total_orders === "number"
+            typeof stats?.total_orders === "number"
               ? `${stats.total_orders.toLocaleString()}`
               : "No disponible"
           }
@@ -168,11 +160,11 @@ export default function Dashboard() {
           title="Crecimiento de ventas"
           tooltip="Comparación de ingresos respecto al mes anterior"
           value={
-            typeof stats.growth_rate === "number"
+            typeof stats?.growth_rate === "number"
               ? `${stats.growth_rate.toLocaleString()}%`
               : "No disponible"
           }
-          change={stats.growth_change.toString()}
+          change={stats?.growth_change.toString()}
         />
       </div>
       {/* Gráficos principales */}
@@ -182,14 +174,18 @@ export default function Dashboard() {
           value={`$${overallTotal.toLocaleString(undefined, {
             maximumFractionDigits: 2,
           })}`}
-          changeBadge={<ChangeBadge percent={monthlyChange.change} />}
+          changeBadge={
+            monthlyChange.change ? (
+              <ChangeBadge percent={monthlyChange.change} />
+            ) : null
+          }
         >
           <LineChart data={monthlySales} />
         </ChartCard>
 
         <ChartCard
-          title={`Producto Estrella: ${starProduct?.name}`}
-          value={`$${starProduct?.total_value.toLocaleString("es-PA")}`}
+          title={`Producto Estrella: ${starProduct?.name ?? "No disponible"}`}
+          value={`$${starProduct?.total_value.toLocaleString("es-PA") ?? "0"}`}
         >
           <GroupedBarChart
             data={starProduct?.monthly_comparison ?? []}
@@ -204,7 +200,7 @@ export default function Dashboard() {
           <ProductWordCloud words={wordcloudData} />
         </ChartCard>
         <ChartCard title="Progreso hacia la meta mensual">
-          <MonthlyGoalGauge current={stats.total_revenue} goal={320} />
+          <MonthlyGoalGauge current={stats?.total_revenue ?? 0} goal={320} />
         </ChartCard>
         <ChartCard title="Actividad por día y hora">
           <SalesHeatmap data={heatmapData} startHour={8} endHour={20} />
