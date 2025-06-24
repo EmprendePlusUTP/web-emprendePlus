@@ -7,8 +7,13 @@ import { useForm } from "react-hook-form";
 import { useAuth0 } from "@auth0/auth0-react";
 
 import { Pencil } from "lucide-react";
-import { fetchProductBySku } from "../services/productServices";
+import {
+  createProductForUser,
+  fetchProductBySku,
+  updateProductBySku,
+} from "../services/productServices";
 import { ProductDetails } from "../hooks/useProductDetails";
+import LoadingPulse from "../components/LoadingPulse";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -97,46 +102,27 @@ export default function ProductDetail() {
 
   const onSubmit = async (data: ProductDetails) => {
     try {
-      const token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-          scope: "openid profile email",
-        },
-      });
+      const token = await getAccessTokenSilently();
 
-      const payload = {
-        sku: data.sku,
-        type: data.type,
-        cost: data.cost,
-        name: data.name,
-        sale_price: data.sale_price,
-        stock: data.stock,
-      };
-
-      const method = isNew ? "POST" : "PATCH";
-      const url = isNew
-        ? "http://localhost:8000/api/products/"
-        : `http://localhost:8000/api/products/${skuValue}`;
-
-      console.log("🚀 Payload enviado al backend:", payload);
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error response:", errorText);
-        throw new Error("Error al guardar el producto");
+      if (isNew) {
+        await createProductForUser(token, {
+          sku: data.sku,
+          name: data.name,
+          type: data.type,
+          cost: data.cost,
+          sale_price: data.sale_price,
+          stock: data.stock,
+        });
+      } else {
+        await updateProductBySku(skuValue, token, {
+          name: data.name,
+          type: data.type,
+          cost: data.cost,
+          sale_price: data.sale_price,
+          stock: data.stock,
+        });
       }
 
-      const result = await response.json();
-      console.log("Producto guardado:", result);
       navigate("/products");
     } catch (err) {
       console.error(err);
@@ -144,7 +130,15 @@ export default function ProductDetail() {
     }
   };
 
-  if (loading) return <p>Cargando...</p>;
+  if (loading) {
+    return (
+      <div className="h-svh flex items-center justify-center bg-neutral-900 text-white">
+        <div className="w-48 text-white animate-pulse">
+          <LoadingPulse />
+        </div>
+      </div>
+    );
+  }
   if (!isNew && !skuValue) return <p>Producto no encontrado</p>;
 
   return (

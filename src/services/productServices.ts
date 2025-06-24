@@ -39,3 +39,41 @@ export async function deleteProductBySku(sku: string, token: string): Promise<vo
     throw new Error("Error deleting product");
   }
 }
+
+export async function createProductForUser(token: string, data: Partial<ProductDetails>) {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const res = await fetch(`${API_URL}/api/products/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Error al crear producto: ${error}`);
+  }
+
+  return await res.json();
+}
+
+export async function updateProductBySku(sku: string, token: string, data: Partial<ProductDetails>) {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const res = await fetch(`${API_URL}/api/products/${encodeURIComponent(sku)}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Error al actualizar producto: ${error}`);
+  }
+
+  return await res.json();
+}
