@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/ChatWidget.tsx
 import React, { useState } from "react";
 import { AdvisorChat } from "./AdvisorChat";
@@ -19,9 +21,20 @@ const ChatWidget: React.FC = () => {
                     }`}
       >
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-neutral-700">
-          <h4 className="font-semibold text-gray-800 dark:text-neutral-200">
-            ModaldoBot
-          </h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-gray-800 dark:text-neutral-200">
+              ModaldoBot
+            </h4>
+            <button
+              onClick={() => {
+                localStorage.removeItem("advisor_chat_messages");
+                window.dispatchEvent(new Event("advisor-chat-reset"));
+              }}
+              className="text-xs text-red-600 dark:text-red-400 hover:underline"
+            >
+              🗑️ Reset
+            </button>
+          </div>
           <button
             onClick={() => setOpen(false)}
             className="p-1 rounded hover:bg-gray-200 dark:hover:bg-neutral-700"
