@@ -77,3 +77,25 @@ export async function updateProductBySku(sku: string, token: string, data: Parti
 
   return await res.json();
 }
+
+export async function uploadProductImage(sku: string, token: string, file: File) {
+  const API_URL = import.meta.env.VITE_API_URL;
+  const formData = new FormData();
+  formData.append("sku", sku);
+  formData.append("file", file);
+
+  const res = await fetch(`${API_URL}/api/products/upload-image/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Error al subir imagen: ${error}`);
+  }
+
+  return await res.json();
+}

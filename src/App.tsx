@@ -1,3 +1,5 @@
+/** @format */
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/auth/AuthPage";
@@ -13,6 +15,8 @@ import { UserProvider } from "./contexts/UserContext";
 import Finances from "./pages/Finances";
 import FinancesDetails from "./pages/FinancesDetails";
 import SaleDetail from "./pages/SaleDetail";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
@@ -45,6 +49,7 @@ function App() {
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </BrowserRouter>
   );
 }

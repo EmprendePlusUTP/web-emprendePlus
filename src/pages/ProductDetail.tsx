@@ -5,12 +5,14 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useAuth0 } from "@auth0/auth0-react";
+import { toast } from "react-toastify";
 
 import { Pencil } from "lucide-react";
 import {
   createProductForUser,
   fetchProductBySku,
   updateProductBySku,
+  uploadProductImage,
 } from "../services/productServices";
 import { ProductDetails } from "../hooks/useProductDetails";
 import LoadingPulse from "../components/LoadingPulse";
@@ -22,6 +24,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
 
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const {
     register,
     handleSubmit,
@@ -50,8 +53,9 @@ export default function ProductDetail() {
           setProduct(product); // ✅ usar solo esto
           setNameValue(product.name);
           setSkuValue(product.sku);
-          setPreviewUrl(product.imageUrl); // ✅ imageUrl existe en ProductDetails
           reset(product); // ✅ cargar datos en el formulario
+          // Asegura que la imagen previa se sincroniza correctamente
+          setPreviewUrl(product.imageUrl || undefined);
         } catch (e) {
           console.error("❌ Error cargando producto", e);
         } finally {
@@ -60,8 +64,8 @@ export default function ProductDetail() {
       } else if (isNew && !hasFetchedRef.current) {
         hasFetchedRef.current = true;
         reset({
-          sku: "",
-          name: "",
+            sku: "",
+            name: "",
           description: "",
           type: "",
           cost: 0,
@@ -95,7 +99,10 @@ export default function ProductDetail() {
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) setPreviewUrl(URL.createObjectURL(file));
+      if (file) {
+        setPreviewUrl(URL.createObjectURL(file));
+        setSelectedFile(file);
+      }
     },
     []
   );
@@ -103,8 +110,10 @@ export default function ProductDetail() {
   const onSubmit = async (data: ProductDetails) => {
     try {
       const token = await getAccessTokenSilently();
+      let finalSku = skuValue;
 
       if (isNew) {
+        toast.info("Guardando producto...");
         await createProductForUser(token, {
           sku: data.sku,
           name: data.name,
@@ -113,6 +122,7 @@ export default function ProductDetail() {
           sale_price: data.sale_price,
           stock: data.stock,
         });
+        finalSku = data.sku;
       } else {
         await updateProductBySku(skuValue, token, {
           name: data.name,
@@ -123,12 +133,43 @@ export default function ProductDetail() {
         });
       }
 
+      // Subir imagen si hay archivo seleccionado
+      if (selectedFile) {
+        await uploadProductImage(finalSku, token, selectedFile);
+      }
+
+      // Refresca el producto para obtener la nueva imagen
+      const updatedProduct = await fetchProductBySku(finalSku, token);
+      setProduct(updatedProduct);
+      setPreviewUrl(updatedProduct.imageUrl);
+
+      toast.success(
+        isNew
+          ? "Producto creado correctamente"
+          : "Producto actualizado correctamente"
+      );
       navigate("/products");
     } catch (err) {
       console.error(err);
-      alert("Hubo un error al guardar el producto.");
+      toast.error("Hubo un error al guardar el producto");
     }
   };
+
+  // Sincroniza previewUrl con la imagen del producto cuando cambia el producto
+  useEffect(() => {
+    // Mostrar la imagen guardada en la base de datos al editar, a menos que el usuario seleccione una nueva
+    if (product && (!selectedFile || previewUrl === undefined)) {
+      if (
+        product.imageUrl &&
+        typeof product.imageUrl === "string" &&
+        product.imageUrl.trim() !== ""
+      ) {
+        setPreviewUrl(product.imageUrl);
+      } else {
+        setPreviewUrl(undefined);
+      }
+    }
+  }, [product, selectedFile, previewUrl]);
 
   if (loading) {
     return (
@@ -144,7 +185,7 @@ export default function ProductDetail() {
   return (
     <div className="max-w-6xl mx-auto bg-white dark:bg-neutral-800 p-6 rounded-xl shadow">
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/products")}
         className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
       >
         ← Volver
@@ -182,7 +223,7 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Imagen principal y upload */}
           <div className="space-y-4">
-            <div className="rounded-md overflow-hidden border border-gray-200 dark:border-neutral-700">
+            <div className="rounded-md overflow-hidden border border-gray-200 dark:border-neutral-700 flex items-center justify-center min-h-48">
               {previewUrl ? (
                 <img
                   src={previewUrl}
@@ -190,9 +231,9 @@ export default function ProductDetail() {
                   className="w-full object-cover"
                 />
               ) : (
-                <div className="w-full h-64 flex items-center justify-center text-gray-400 dark:text-neutral-500">
+                <span className="text-gray-400 dark:text-gray-500 py-12">
                   No hay imagen
-                </div>
+                </span>
               )}
             </div>
             <div>
