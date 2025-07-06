@@ -1,5 +1,6 @@
 // src/pages/BusinessSettings.tsx
 import React from "react";
+// import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import Modal from "../components/Modal"; // para previsualizar la factura
 import { useAuth0 } from "@auth0/auth0-react";
@@ -33,6 +34,13 @@ type BusinessForm = {
   numberFormat: string;
 };
 
+
+// IMPORTANTE:
+// El negocio solo se crea cuando el usuario envía este formulario.
+// No se crea ni asigna automáticamente ningún negocio al iniciar sesión.
+// Si es la primera vez, usa un endpoint POST para crear el negocio.
+// Si es edición, usa PATCH para actualizar.
+
 export default function BusinessSettings() {
   const {getAccessTokenSilently} = useAuth0();
   const { register, handleSubmit, watch, formState } = useForm<BusinessForm>({
@@ -50,6 +58,8 @@ export default function BusinessSettings() {
   });
   const [showPreview, setShowPreview] = React.useState(false);
 
+  // Si es la primera vez, usa POST para crear el negocio. Si es edición, usa PATCH.
+  // Aquí solo se crea el negocio cuando el usuario envía el formulario.
   const onSubmit = async (data: BusinessForm) => {
     try {
       const token = await getAccessTokenSilently({
@@ -58,7 +68,7 @@ export default function BusinessSettings() {
           scope: "openid profile email",
         },
       });
-  
+
       const payload = {
         name: data.name,
         description: data.tagline,
@@ -81,24 +91,25 @@ export default function BusinessSettings() {
         number_format: data.numberFormat,
         // logo_url: puedes subir esto aparte si manejas imágenes en otra API
       };
-      
-  
+
+      // Cambia a POST si es la primera vez (crear negocio)
       const res = await fetch("http://localhost:8000/api/business/update-business/", {
-        method: "PATCH",
+        method: "PATCH", // Cambia a 'POST' si es creación
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
-  
+
       if (!res.ok) {
-        throw new Error("Error al actualizar el negocio");
+        throw new Error("Error al guardar el negocio");
       }
-  
+
       const result = await res.json();
-      console.log("Negocio actualizado:", result);
-      alert("Configuración guardada con éxito.");
+      console.log("Negocio guardado:", result);
+      // Redirigir al inicio después de guardar
+      window.location.replace("/");
     } catch (err) {
       console.error(err);
       alert("Ocurrió un error al guardar los cambios.");

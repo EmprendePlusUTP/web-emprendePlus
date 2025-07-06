@@ -56,23 +56,36 @@ const Layout: React.FC = () => {
     sendSession();
   }, [isAuthenticated, user]);
   const { userData } = useUserWithBusiness(sessionReady);
-  const [showBusinessModal, setShowBusinessModal] = useState(false);
 
+  // Redirección según el estado de negocios del usuario
   useEffect(() => {
-    if (
-      userData &&
-      (!Array.isArray(userData.businesses) || userData.businesses.length === 0)
-    ) {
-      navigate("/business");
+    if (!userData || !userData.id) return;
+
+    // Usar un flag único por usuario
+    const userKey = `newUserRedirected_${userData.id || userData.sub || ''}`;
+
+    const hasValidBusiness = Array.isArray(userData.businesses) && userData.businesses.some(
+      (b) => b && b.id && b.name && b.name.trim() !== ""
+    );
+
+    // Si el usuario NO tiene negocios, lo llevamos a /business SOLO la primera vez
+    if (!hasValidBusiness) {
+      const alreadyRedirected = sessionStorage.getItem(userKey);
+      if (!alreadyRedirected) {
+        sessionStorage.setItem(userKey, "true");
+        if (window.location.pathname !== "/business") {
+          navigate("/business", { replace: true });
+        }
+      }
       return;
     }
-    if (
-      userData &&
-      Array.isArray(userData.businesses) &&
-      userData.businesses.length > 0 &&
-      userData.businesses[0].name === "Mi Negocio"
-    ) {
-      setShowBusinessModal(true);
+
+    // Si el usuario YA tiene negocio, siempre lo llevamos al inicio
+    if (sessionStorage.getItem(userKey)) {
+      sessionStorage.removeItem(userKey);
+    }
+    if (window.location.pathname !== "/") {
+      navigate("/", { replace: true });
     }
   }, [userData, navigate]);
 
@@ -91,21 +104,6 @@ const Layout: React.FC = () => {
         <div className="absolute right-4 bottom-4 z-50">
           <ChatWidget />
         </div>
-        {showBusinessModal && (
-          <Modal onClose={() => setShowBusinessModal(false)}>
-            <div className="text-center">
-              <h2 className="text-xl font-bold mb-4">¡Crea tu negocio!</h2>
-              <p className="mb-4">Por favor, actualiza la información de tu negocio para continuar.</p>
-              {/* Aquí puedes agregar el formulario o componente para actualizar el negocio */}
-              <button
-                className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={() => setShowBusinessModal(false)}
-              >
-                Cerrar
-              </button>
-            </div>
-          </Modal>
-        )}
       </div>
     </div>
   );
