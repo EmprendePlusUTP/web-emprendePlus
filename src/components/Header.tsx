@@ -1,10 +1,14 @@
 /** @format */
 
-// src/components/Header/Header.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UserDropdown from "./UserDropdown";
+import {
+  getCachedAvatar,
+  saveAvatarToCache,
+  clearCachedAvatar,
+} from "../utils/avatarCache";
 
 type HeaderProps = {
   userData: {
@@ -16,11 +20,29 @@ const Header: React.FC<HeaderProps> = ({ userData }) => {
   const { user, isAuthenticated, logout, isLoading } = useAuth0();
   const navigate = useNavigate();
   const location = useLocation();
-
   const businessName = userData?.business_name || "EmprendePlus";
+
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+
+  // 1. Al cargar, busca la imagen cacheada
+  useEffect(() => {
+    const cached = getCachedAvatar();
+    if (cached) {
+      setAvatarUrl(cached);
+    }
+  }, []);
+
+  // 2. Cuando se detecta un nuevo usuario logueado, guarda la imagen si no estaba guardada
+  useEffect(() => {
+    if (user?.picture && avatarUrl !== user.picture) {
+      saveAvatarToCache(user.picture);
+      setAvatarUrl(user.picture);
+    }
+  }, [user?.picture]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && location.pathname !== "/auth") {
+      clearCachedAvatar();
       navigate("/auth");
     }
   }, [isLoading, isAuthenticated, location.pathname, navigate]);
@@ -35,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ userData }) => {
               userName={user.name || "Usuario"}
               businessName={businessName}
               email={user.email || ""}
-              avatarUrl={user.picture || undefined}
+              avatarUrl={avatarUrl}
               onLogout={() =>
                 logout({
                   logoutParams: {

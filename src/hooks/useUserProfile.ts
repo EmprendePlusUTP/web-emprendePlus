@@ -7,7 +7,6 @@ import {
   registerUserSession,
 } from "../services/userProfileServices";
 
-// Opcional: define el tipo si conoces la estructura
 type UserProfile = {
   user: {
     name: string;

@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/ChatInput.tsx
 import React, { useRef, useState, KeyboardEvent } from "react";
 import Loading from "./Loading";

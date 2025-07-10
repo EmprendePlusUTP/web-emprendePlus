@@ -6,11 +6,8 @@ import BaseTable, { Column } from "./BaseTable";
 export interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
-  /** Opción para colocar un toolbar encima (botones, filtros…) */
   toolbar?: React.ReactNode;
-  /** Título opcional para mostrar en el DataTable */
   title: string;
-  /** Elementos por página para la paginación */
   itemsPerPage?: number;
 }
 
@@ -21,10 +18,8 @@ function DataTable<T>({
   title,
   itemsPerPage = 10,
 }: DataTableProps<T>) {
-  // Estado de paginación
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Calcular total de páginas
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
   // Datos para la página actual

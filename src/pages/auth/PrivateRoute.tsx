@@ -1,10 +1,13 @@
+/** @format */
+
 // src/components/PrivateRoute.tsx
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
+import FullPageLoader from "../../components/FullPageLoader";
 
 interface PrivateRouteProps {
-  children: React.ReactElement
+  children: React.ReactElement;
 }
 
 export default function PrivateRoute({ children }: PrivateRouteProps) {
@@ -15,7 +18,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <span className="text-gray-500">Comprobando sesión…</span>
+        <FullPageLoader />
       </div>
     );
   }

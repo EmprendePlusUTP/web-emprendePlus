@@ -1,3 +1,5 @@
+/** @format */
+
 // src/contexts/UserContext.tsx
 import React, { createContext, useContext } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -46,50 +48,22 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const ctx: UserContextType = {
     userId: user.sub || "",
     userName: user.name || "",
-    // Claim personalizado en Auth0 para el nombre de negocio, o fallback
-    // (user as any)["https://tu-app.com/businessName"] || "EmprendePlus",
-    businessName: "EmprendePlus", // Mock para el nombre de negocio
-    // Para más adelante, podrías fetchear la moneda y demás desde tu API
+    businessName: "EmprendePlus",
     currency: "USD",
 
-    // Estos arrays pueden venir de tu API; por ahora, mock:
-    salesHistory: [
-      { date: "2025-01-01", revenue: 1200 },
-      { date: "2025-02-01", revenue: 1500 },
-      { date: "2025-03-01", revenue: 1800 },
-    ],
+    salesHistory: [],
     topProduct: {
-      id: "p001",
-      name: "Camiseta Premium",
-      monthlySales: 500,
-      profitMargin: 0.25,
-      supplier: "Proveedor A",
-      stock: 120,
+      id: "",
+      name: "",
+      monthlySales: 0,
+      profitMargin: 0,
+      supplier: "",
+      stock: 0,
     },
-    productList: [
-      {
-        id: "p001",
-        name: "Camiseta Premium",
-        monthlySales: 500,
-        supplier: "Proveedor A",
-        stock: 120,
-      },
-      {
-        id: "p002",
-        name: "Gorra Trendy",
-        monthlySales: 320,
-        supplier: "Proveedor B",
-        stock: 80,
-      },
-      // …
-    ],
+    productList: [],
   };
 
-  return (
-    <UserContext.Provider value={ctx}>
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={ctx}>{children}</UserContext.Provider>;
 };
 
 export function useUserContext(): UserContextType {

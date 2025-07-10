@@ -19,12 +19,12 @@ export default function MonthlyGoalGauge({ current, goal }: Props) {
     {
       name: "Fondo",
       value: goal,
-      fill: "#E5E7EB", // gris claro fondo
+      fill: "#E5E7EB",
     },
     {
       name: "Progreso",
       value: current,
-      fill: "#4ade80", // verde progreso
+      fill: "#4ade80",
     },
   ];
 

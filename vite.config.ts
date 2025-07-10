@@ -20,8 +20,6 @@ export default {
       rewrite: (path) => path.replace(/^\/api/, "/api"),
     },
       
-      // si mañana tienes más endpoints, puedes hacer:
-      // "^/api/.*": "http://localhost:8000"
     },}
   // ...
 } satisfies UserConfig;

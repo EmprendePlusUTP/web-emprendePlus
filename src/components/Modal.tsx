@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/Modal.tsx
 import React, { ReactNode, useEffect } from "react";
 import ReactDOM from "react-dom";
@@ -8,7 +10,6 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
-  // Crea un contenedor para el portal si no existe
   const modalRoot =
     document.getElementById("modal-root") ||
     (() => {
@@ -18,7 +19,6 @@ const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
       return root;
     })();
 
-  // Evitar scroll del body mientras el modal está abierto
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -26,7 +26,6 @@ const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
     };
   }, []);
 
-  // Cierra al hacer clic en el fondo
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -60,7 +59,6 @@ const Modal: React.FC<ModalProps> = ({ children, onClose }) => {
             />
           </svg>
         </button>
-        {/* Contenido del modal */}
         {children}
       </div>
     </div>

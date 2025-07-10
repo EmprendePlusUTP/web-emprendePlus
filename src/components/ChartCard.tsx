@@ -25,16 +25,12 @@ const ChartCard = ({
   return (
     <div
       className={[
-        // Padding y layout
         "p-4 md:p-5 flex flex-col",
-        // Fondo, borde y sombras
         "bg-white border border-gray-200 shadow-2xs rounded-xl",
         "dark:bg-neutral-800 dark:border-neutral-700",
         "min-w-0",
         "dark:text-gray-200",
-        // Ancho según prop
         widthClasses[widthMode],
-        // Cualquier clase extra
         className,
       ]
         .filter(Boolean)
@@ -58,8 +54,6 @@ const ChartCard = ({
           {changeBadge && <div>{changeBadge}</div>}
         </div>
       )}
-
-      {/* Contenido (chart, tabla, etc.) */}
       <div className="flex-1 min-w-0 overflow-hidden">{children}</div>
     </div>
   );

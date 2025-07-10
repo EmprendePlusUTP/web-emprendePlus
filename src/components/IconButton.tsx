@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/Header/IconButton.tsx
 import React from "react";
 

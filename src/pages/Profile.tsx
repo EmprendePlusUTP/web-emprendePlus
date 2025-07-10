@@ -26,7 +26,6 @@ export default function Profile() {
   if (isLoading) return <p className="p-6 text-center">Cargando perfil…</p>;
 
   const saveField = (field: "name" | "email") => {
-    // aquí llamarías a tu API para persistir el cambio
     setProfile((prev) => ({ ...prev, [field]: draft[field] }));
     setEditingField(null);
   };
@@ -57,7 +56,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Editable Fields */}
+          {/* Campos editables*/}
           <div className="space-y-4">
             {/* Nombre */}
             <div>
@@ -179,7 +178,7 @@ export default function Profile() {
                 </dt>
                 <dd>Activo</dd>
               </div>
-              {/* Añade más campos según necesites */}
+              {/* Se pueden añadir mas campos*/}
             </dl>
           </div>
 

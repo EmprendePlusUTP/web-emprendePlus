@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/ViewToggleButton.tsx
 import React from "react";
 

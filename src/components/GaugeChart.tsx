@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/GaugeChart.tsx
 import { useRef, useEffect } from "react";
 import {
@@ -20,11 +22,8 @@ export interface GaugeChartProps {
   maxValue?: number;
   majorTicks?: number;
   transitionMs?: number;
-  /** 'default' = beige→verde | 'thermometer' = rojo→verde */
   colorScheme?: "default" | "thermometer";
-  /** Muestra en el centro el % (value − min)/(max − min) */
   showPercentageLabel?: boolean;
-  /** Renderiza las etiquetas de ticks por fuera (arriba) del arco */
   showTickLabels?: boolean;
 }
 

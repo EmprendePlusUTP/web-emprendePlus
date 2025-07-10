@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/Sidebar.tsx
 import React, { useEffect } from "react";
 import { NavLink } from "react-router-dom";
@@ -18,7 +20,6 @@ declare global {
 }
 const Sidebar: React.FC<SidebarProps> = ({ items }) => {
   useEffect(() => {
-    // Inicializa Preline tras montar
     window?.Preline?.init();
   }, []);
 

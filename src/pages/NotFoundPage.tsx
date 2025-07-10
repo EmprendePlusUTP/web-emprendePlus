@@ -1,3 +1,5 @@
+/** @format */
+
 import { useNavigate } from "react-router-dom";
 import EmprendePlusLogo from "../components/Logos/EmprendePlusLogo";
 
@@ -14,9 +16,9 @@ export default function NotFoundPage() {
           <h1 className="text-6xl font-bold text-gray-800 dark:text-white">
             Uups!
           </h1>
-            <p className="text-lg text-gray-600 dark:text-neutral-400">
+          <p className="text-lg text-gray-600 dark:text-neutral-400">
             No podemos encontrar la página que estás buscando.
-            </p>
+          </p>
           <p className="text-md text-gray-500 dark:text-neutral-500">
             Codigo de error: 404
           </p>

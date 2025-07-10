@@ -1,3 +1,5 @@
+/** @format */
+
 const UTPLogo = () => {
   return (
     <svg viewBox="0 0 468 468" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/AuthForm.tsx
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -42,12 +44,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
         {/* Header dinámico */}
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-            {mode === "signin" ? "Sign in" : "Sign up"}
+            {mode === "signin" ? "Iniciar sesión" : "Registrarse"}
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
             {mode === "signin"
-              ? "Don’t have an account yet?"
-              : "Already have an account?"}{" "}
+              ? "¿Aún no tienes una cuenta?"
+              : "¿Ya tienes una cuenta?"}{" "}
             <button
               type="button"
               onClick={() =>
@@ -55,7 +57,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
               }
               className="text-blue-600 decoration-2 hover:underline focus:outline-none font-medium dark:text-blue-500"
             >
-              {mode === "signin" ? "Sign up here" : "Sign in here"}
+              {mode === "signin" ? "Regístrate aquí" : "Inicia sesión aquí"}
             </button>
           </p>
         </div>
@@ -77,7 +79,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
               <GoogleLogo />
             </div>
 
-            {mode === "signin" ? "Sign in with Google" : "Sign up with Google"}
+            {mode === "signin"
+              ? "Iniciar sesión con Google"
+              : "Registrarse con Google"}
           </button>
 
           {/* Microsoft */}
@@ -96,14 +100,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
             </div>
 
             {mode === "signin"
-              ? "Sign in with Microsoft"
-              : "Sign up with Microsoft"}
+              ? "Iniciar sesión con Microsoft"
+              : "Registrarse con Microsoft"}
           </button>
         </div>
 
         {/* Divider */}
         <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6 dark:text-neutral-500">
-          Or with email
+          O con email
         </div>
 
         {/* Email + Password Form */}
@@ -115,12 +119,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
                 htmlFor="email"
                 className="block text-sm mb-2 dark:text-white"
               >
-                Email address
+                Correo electrónico
               </label>
               <input
                 id="email"
                 type="email"
-                {...register("email", { required: "Email is required" })}
+                {...register("email", { required: "El correo es requerido" })}
                 className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
               />
               {errors.email && (
@@ -136,14 +140,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
                 htmlFor="password"
                 className="block text-sm mb-2 dark:text-white"
               >
-                Password
+                Contraseña
               </label>
               <input
                 id="password"
                 type="password"
                 {...register("password", {
-                  required: "Password is required",
-                  minLength: { value: 6, message: "At least 6 chars" },
+                  required: "La contraseña es requerida",
+                  minLength: { value: 6, message: "Mínimo 6 caracteres" },
                 })}
                 className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
               />
@@ -161,14 +165,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
                   htmlFor="confirmPassword"
                   className="block text-sm mb-2 dark:text-white"
                 >
-                  Confirm Password
+                  Confirmar contraseña
                 </label>
                 <input
                   id="confirmPassword"
                   type="password"
                   {...register("confirmPassword", {
-                    required: "Please confirm",
-                    validate: (v) => v === password || "Passwords do not match",
+                    required: "Por favor confirma",
+                    validate: (v) =>
+                      v === password || "Las contraseñas no coinciden",
                   })}
                   className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400"
                 />
@@ -187,10 +192,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
               className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {isSubmitting
-                ? "Redirecting…"
+                ? "Redirigiendo…"
                 : mode === "signin"
-                ? "Sign in"
-                : "Sign up"}
+                ? "Iniciar sesión"
+                : "Registrarse"}
             </button>
           </div>
         </form>
