@@ -74,11 +74,11 @@ export async function fetchStarProductComparison(
   return await res.json();
 }
 
-export interface StarProductResponse {
+export type StarProductResponse = {
   name: string;
   total_value: number;
   monthly_comparison: MonthlyData[];
-}
+} | null;
 
 export const fetchStarProduct = async (token: string): Promise<StarProductResponse> => {
 
@@ -88,9 +88,10 @@ export const fetchStarProduct = async (token: string): Promise<StarProductRespon
     },
   });
 
-  if (!res.ok) {
-    throw new Error("Error al obtener el producto estrella");
+ if (res.status === 204) {
+    // No hay producto estrella
+    return null;
   }
 
-  return await res.json();
+  return res.json();
 };

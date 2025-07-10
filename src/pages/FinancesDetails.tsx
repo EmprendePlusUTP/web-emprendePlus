@@ -18,7 +18,6 @@ import { RadarChart } from "echarts/charts";
 
 import ChartCard from "../components/ChartCard";
 import SunburstChart from "../components/SunBurstChart";
-import { sunburstData } from "../data/SunburstData/sunburstData";
 
 import { BudgetRead } from "../types/budgetTypes";
 
@@ -27,6 +26,7 @@ import { fetchBudgets, upsertBudget } from "../services/budgetServices";
 import { fetchFinances } from "../services/financesServices";
 import { DataNode } from "../components/SunburstBase";
 import LoadingPulse from "../components/LoadingPulse";
+import { financeCategories } from "../components/types/financeCategories";
 
 echarts.use([
   TitleComponent,
@@ -93,10 +93,11 @@ export const FinancesDetails: React.FC = () => {
   const [newSubcategory, setNewSubcategory] = useState("");
   const [newSubcategories, setNewSubcategories] = useState<string[]>([]);
   const [newAmount, setNewAmount] = useState(0);
-  const categories = sunburstData.children?.map((n) => n.name) ?? [];
+  const categories = financeCategories.map((cat) => cat.name);
+
   useEffect(() => {
-    const node = sunburstData.children?.find((n) => n.name === newCategory);
-    const subs = node?.children?.map((c) => c.name) ?? [];
+    const category = financeCategories.find((c) => c.name === newCategory);
+    const subs = category?.subcategories ?? [];
     setNewSubcategories(subs);
     setNewSubcategory(subs[0] ?? "");
   }, [newCategory]);

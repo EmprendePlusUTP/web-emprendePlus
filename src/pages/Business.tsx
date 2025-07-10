@@ -5,6 +5,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../components/Modal"; // para previsualizar la factura
 import { useAuth0 } from "@auth0/auth0-react";
+import { updateBusinessSettings } from "../services/businessServices";
 import { toast } from "react-toastify";
 
 type BusinessForm = {
@@ -82,28 +83,10 @@ export default function BusinessSettings() {
         language: data.language,
         date_format: data.dateFormat,
         number_format: data.numberFormat,
-        // logo_url: puedes subir esto aparte si manejas imágenes en otra API
       };
 
-      const res = await fetch(
-        "http://localhost:8000/api/business/update-business/",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Error al actualizar el negocio");
-      }
-
-      const result = await res.json();
-      console.log("Negocio actualizado:", result);
-      toast.success("Configuración guardada con éxito");
+      await updateBusinessSettings(payload, token);
+      toast.success("Configuración guardada con éxito.");
     } catch (err) {
       console.error(err);
       toast.error("Ocurrió un error al guardar los cambios");
