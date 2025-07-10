@@ -2,7 +2,8 @@
 
 // src/components/Finances/AddTransactionForm.tsx
 import React, { useState, useEffect } from "react";
-import { sunburstData } from "../../data/SunburstData/sunburstData";
+import { FinanceCategory } from "../types/financeCategory";
+import { DataNode } from "../SunburstBase";
 
 export type TransactionType = "income" | "expense";
 
@@ -17,9 +18,19 @@ export type Transaction = {
 
 type Props = {
   onAdd: (tx: Transaction) => void;
+  categories: FinanceCategory[];
 };
 
-export const AddTransactionForm = ({ onAdd }: Props) => {
+export function extractCategories(data: DataNode): FinanceCategory[] {
+  return (
+    data.children?.map((cat) => ({
+      name: cat.name,
+      subcategories: cat.children?.map((sub) => sub.name) || [],
+    })) ?? []
+  );
+}
+
+export const AddTransactionForm = ({ onAdd, categories }: Props) => {
   const [type, setType] = useState<TransactionType>("income");
   const [category, setCategory] = useState<string>("");
   const [subcategory, setSubcategory] = useState<string>("");
@@ -31,16 +42,12 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
     return now.toISOString().slice(0, 16);
   });
 
-  // Lista de categorías principales (protege si children es undefined)
-  const categories = sunburstData.children?.map((node) => node.name) ?? [];
-
-  // Cuando cambia la categoría, actualizamos subcategorías
   useEffect(() => {
-    const node = sunburstData.children?.find((n) => n.name === category);
-    const subs = node?.children?.map((c) => c.name) ?? [];
+    const selected = categories.find((c) => c.name === category);
+    const subs = selected?.subcategories ?? [];
     setSubcategories(subs);
     setSubcategory(subs[0] ?? "");
-  }, [category]);
+  }, [category, categories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +62,6 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
       date,
     });
 
-    // Limpiar campos
     setType("income");
     setCategory("");
     setSubcategory("");
@@ -103,8 +109,8 @@ export const AddTransactionForm = ({ onAdd }: Props) => {
               Selecciona categoría
             </option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+              <option key={cat.name} value={cat.name}>
+                {cat.name}
               </option>
             ))}
           </select>

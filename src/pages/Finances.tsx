@@ -26,6 +26,7 @@ import ChartCard from "../components/ChartCard";
 import RacingBarChartWithControls from "../components/RacingBarChartWithControls";
 import { fetchSales } from "../services/salesServices";
 import LoadingPulse from "../components/LoadingPulse";
+import { financeCategories } from "../components/types/financeCategories";
 
 export const FinancesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -205,7 +206,10 @@ export const FinancesPage: React.FC = () => {
 
       {/* Formulario de transacciones */}
       <section className="mb-8">
-        <AddTransactionForm onAdd={handleAddTransaction} />
+        <AddTransactionForm
+          onAdd={handleAddTransaction}
+          categories={financeCategories}
+        />
       </section>
 
       {/* Tabla de transacciones */}
