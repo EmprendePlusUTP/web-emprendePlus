@@ -1,7 +1,9 @@
+/** @format */
+
 // src/components/StatsCard.tsx
 import React, { useState } from "react";
 import ChangeBadge from "./ChangeBadge";
-import {CircleHelp} from "lucide-react"
+import { CircleHelp } from "lucide-react";
 
 export interface StatsCardProps {
   title: string;
@@ -32,13 +34,17 @@ const StatsCard: React.FC<StatsCardProps> = ({
               onMouseEnter={() => setTooltipVisible(true)}
               onMouseLeave={() => setTooltipVisible(false)}
             >
-
-              <CircleHelp className="text-neutral-200 dark:text-neutral-500 w-4"/>
+              <CircleHelp className="text-neutral-200 dark:text-neutral-500 w-4" />
               {isTooltipVisible && (
                 <span
                   className="absolute z-10 py-1 px-2 bg-gray-900 text-xs font-medium text-white rounded-md shadow-2xs dark:bg-neutral-700"
                   role="tooltip"
-                  style={{ top: "100%", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}
+                  style={{
+                    top: "100%",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {tooltip}
                 </span>

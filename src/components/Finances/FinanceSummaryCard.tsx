@@ -1,14 +1,21 @@
+/** @format */
+
 // src/components/finances/FinanceSummaryCard.tsx
 import React from "react";
 
 type Props = {
   title: string;
   value: number;
-  className?: string; // para personalizar color de fondo claro
+  className?: string;
   icon?: React.ReactNode;
 };
 
-export const FinanceSummaryCard = ({ title, value, className = "", icon }: Props) => {
+export const FinanceSummaryCard = ({
+  title,
+  value,
+  className = "",
+  icon,
+}: Props) => {
   return (
     <div
       className={`
@@ -19,7 +26,9 @@ export const FinanceSummaryCard = ({ title, value, className = "", icon }: Props
     >
       {icon && <div className="mr-3">{icon}</div>}
       <div>
-        <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">{title}</p>
+        <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">
+          {title}
+        </p>
         <p className="text-2xl font-semibold text-gray-800 dark:text-neutral-100">
           ${value.toLocaleString("es-PA")}
         </p>

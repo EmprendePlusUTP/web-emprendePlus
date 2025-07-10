@@ -1,10 +1,14 @@
+/** @format */
+
 // src/components/Header/SearchInput.tsx
 import React from "react";
 
 const SearchInput: React.FC = () => (
   <div className="relative w-full max-w-xs">
     <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-      <svg className="shrink-0 size-4 text-gray-400 dark:text-white/60" /* ... */ />
+      <svg
+        className="shrink-0 size-4 text-gray-400 dark:text-white/60" /* ... */
+      />
     </div>
     <input
       type="text"

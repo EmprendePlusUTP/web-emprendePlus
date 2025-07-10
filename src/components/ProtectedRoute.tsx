@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/ProtectedRoute.tsx
 import React from "react";
 import { Navigate } from "react-router-dom";
@@ -16,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <FullPageLoader />;
   }
 
-  // Si NO está autenticado, vamos a /auth (tu página de login interno)
+  // Si NO está autenticado, vamos a /auth (oágina de login interno)
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

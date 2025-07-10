@@ -1,3 +1,5 @@
+/** @format */
+
 import { forwardRef } from "react";
 import { scaleLinear } from "@visx/scale";
 import { AxisTop as VxAxisTop } from "@visx/axis";

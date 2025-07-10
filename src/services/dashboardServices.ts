@@ -32,12 +32,6 @@ export async function fetchWordCloudData(token: string): Promise<WordCloudItem[]
   return await res.json();
 }
 
-// Si más adelante necesitas agregar:
-// - grouped sales por mes
-// - datos para heatmap
-// - tendencia de ventas del producto estrella
-// ...puedes continuar esta estructura:
-
 
 import { DataPoint } from "../components/LineChart";
 import { MonthlyData } from "../components/types/comparisonChartTypes";
@@ -66,7 +60,7 @@ export async function fetchSalesHeatmapData(token: string): Promise<number[][]> 
   if (!res.ok) throw new Error("Error al obtener datos del heatmap de ventas");
 
   const json = await res.json();
-  return json.data; // asegurarse que el backend envíe en esta forma
+  return json.data;
 }
 
 export async function fetchStarProductComparison(

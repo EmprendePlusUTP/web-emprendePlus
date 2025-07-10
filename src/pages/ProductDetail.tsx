@@ -16,6 +16,7 @@ import {
 } from "../services/productServices";
 import { ProductDetails } from "../hooks/useProductDetails";
 import LoadingPulse from "../components/LoadingPulse";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -30,14 +31,19 @@ export default function ProductDetail() {
     handleSubmit,
     reset,
     setValue,
-    formState: { isSubmitting },
-  } = useForm<ProductDetails>({ defaultValues: {} as ProductDetails });
+    formState: { isSubmitting, isValid },
+  } = useForm<ProductDetails>({
+    mode: "onChange",
+    defaultValues: {} as ProductDetails,
+  });
 
   const [editingName, setEditingName] = useState(isNew);
   const [nameValue, setNameValue] = useState("");
   const [skuValue, setSkuValue] = useState("");
   const { getAccessTokenSilently } = useAuth0();
   const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [showSkuConfirmModal, setShowSkuConfirmModal] = useState(false);
+  const [pendingSkuValue, setPendingSkuValue] = useState<string | null>(null);
 
   const hasFetchedRef = useRef(false);
 
@@ -195,11 +201,12 @@ export default function ProductDetail() {
       <div className="flex items-center mb-6">
         {editingName ? (
           <input
+            {...register("name", { required: true })}
             value={nameValue}
             onChange={(e) => setNameValue(e.target.value)}
             onBlur={() => {
               setEditingName(false);
-              setValue("name", nameValue);
+              setValue("name", nameValue, { shouldValidate: true });
             }}
             placeholder="Nombre del producto"
             className="text-3xl font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-300 focus:outline-none"
@@ -217,6 +224,7 @@ export default function ProductDetail() {
             <Pencil />
           </span>
         )}
+        <span className="text-red-500">*</span>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -259,17 +267,20 @@ export default function ProductDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">
-                  SKU
+                  SKU <span className="text-red-500">*</span>
                 </label>
                 <input
+                  {...register("sku", { required: true })}
                   value={skuValue}
                   onChange={(e) => setSkuValue(e.target.value)}
                   onBlur={() => {
                     const original = product?.sku || "";
-                    if (skuValue !== original) {
-                      if (window.confirm("¿Seguro que deseas cambiar el SKU?"))
-                        setValue("sku", skuValue);
-                      else setSkuValue(original);
+                    const isEditing = !isNew;
+                    if (skuValue !== original && isEditing) {
+                      setPendingSkuValue(skuValue);
+                      setShowSkuConfirmModal(true);
+                    } else {
+                      setValue("sku", skuValue, { shouldValidate: true });
                     }
                   }}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
@@ -306,12 +317,15 @@ export default function ProductDetail() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm text-gray-600 dark:text-gray-400">
-                  Precio
+                  Precio <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
-                  step="0.01"
-                  {...register("sale_price", { valueAsNumber: true })}
+                  step="1.00"
+                  {...register("sale_price", {
+                    valueAsNumber: true,
+                    required: true,
+                  })}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -338,11 +352,14 @@ export default function ProductDetail() {
               </div>
               <div>
                 <label className="block text-sm text-gray-600 dark:text-gray-400">
-                  Stock
+                  Stock <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
-                  {...register("stock", { valueAsNumber: true })}
+                  {...register("stock", {
+                    valueAsNumber: true,
+                    required: true,
+                  })}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -420,7 +437,7 @@ export default function ProductDetail() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isValid}
                 className="py-2 px-6 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >
                 {isSubmitting ? "Guardando…" : "Guardar"}
@@ -429,6 +446,21 @@ export default function ProductDetail() {
           </div>
         </div>
       </form>
+      {showSkuConfirmModal && pendingSkuValue !== null && (
+        <ConfirmationModal
+          message={`¿Seguro que deseas cambiar el SKU de "${product?.sku}" a "${pendingSkuValue}"?`}
+          onCancel={() => {
+            setSkuValue(product?.sku || "");
+            setPendingSkuValue(null);
+            setShowSkuConfirmModal(false);
+          }}
+          onConfirm={() => {
+            setValue("sku", pendingSkuValue);
+            setPendingSkuValue(null);
+            setShowSkuConfirmModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

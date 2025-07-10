@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/EmprendePlusLogo2.tsx
 import React from "react";
 import EmprendePlusIcon from "./EmprendePlusIcon";

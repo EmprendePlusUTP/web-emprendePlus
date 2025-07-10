@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/RacingBarChartWithControls.tsx
 import React, { useRef, useState } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";

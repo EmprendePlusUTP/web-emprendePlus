@@ -12,6 +12,8 @@ import TableCard from "../components/TableCard";
 import { deleteProductBySku, fetchProducts } from "../services/productServices";
 import { useAuth0 } from "@auth0/auth0-react";
 import LoadingPulse from "../components/LoadingPulse";
+import { toast } from "react-toastify";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function Products() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
@@ -20,6 +22,8 @@ export default function Products() {
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const calledRef = useRef(false);
 
@@ -77,20 +81,9 @@ export default function Products() {
           </button>
           <button
             className="text-red-600 hover:underline"
-            onClick={async () => {
-              const confirm = window.confirm(`¿Eliminar producto "${p.name}"?`);
-              if (!confirm) return;
-
-              try {
-                const token = await getAccessTokenSilently();
-                await deleteProductBySku(p.sku, token);
-                setProducts((prev) =>
-                  prev.filter((prod) => prod.sku !== p.sku)
-                );
-              } catch (err) {
-                console.error("Error deleting product", err);
-                alert("Error eliminando el producto");
-              }
+            onClick={() => {
+              setProductToDelete(p);
+              setShowConfirmModal(true);
             }}
           >
             Eliminar
@@ -147,6 +140,32 @@ export default function Products() {
             />
           </TableCard>
         </div>
+      )}
+      {showConfirmModal && productToDelete && (
+        <ConfirmationModal
+          type="negative"
+          message={`¿Eliminar producto "${productToDelete.name}"?`}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setProductToDelete(null);
+          }}
+          onConfirm={async () => {
+            try {
+              const token = await getAccessTokenSilently();
+              await deleteProductBySku(productToDelete.sku, token);
+              setProducts((prev) =>
+                prev.filter((prod) => prod.sku !== productToDelete.sku)
+              );
+              toast.success("Producto eliminado");
+            } catch (err) {
+              console.error("Error deleting product", err);
+              toast.error("Error eliminando el producto");
+            } finally {
+              setShowConfirmModal(false);
+              setProductToDelete(null);
+            }
+          }}
+        />
       )}
     </div>
   );

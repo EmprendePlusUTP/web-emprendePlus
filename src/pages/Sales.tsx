@@ -16,6 +16,7 @@ import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
 import LoadingPulse from "../components/LoadingPulse";
 import { getPanamaISOString } from "../utils/localeTimeZone";
+import { toast } from "react-toastify";
 
 export default function Sales() {
   const navigate = useNavigate();
@@ -162,7 +163,7 @@ export default function Sales() {
               setProducts(data);
             } catch (err) {
               console.error("Error cargando productos", err);
-              alert("No se pudieron cargar los productos");
+              toast.error("No se pudieron cargar los productos");
             }
           }}
           className="py-2 px-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -316,10 +317,10 @@ export default function Sales() {
                   );
                   setSalesByProduct(flat);
 
-                  alert("Venta registrada correctamente");
+                  toast.success("Venta registrada correctamente");
                   handleCloseModal();
                 } catch (err: any) {
-                  alert(err.message || "Error registrando la venta");
+                  toast.error("Error registrando la venta");
                   console.error("Error al guardar venta:", err);
                 }
               }}

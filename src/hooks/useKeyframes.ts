@@ -36,7 +36,6 @@ function makeKeyframes(data: BarRaceData[], numOfSlice: number): Keyframe[] {
   const names = Array.from(new Set(data.map((d) => d.name)));
   const dates = Array.from(new Set(data.map((d) => d.date))).sort();
 
-  // Prepara los frames "origén"
   const frames = dates.map((date) => ({
     date,
     rows: names.map((name) => {
@@ -46,7 +45,6 @@ function makeKeyframes(data: BarRaceData[], numOfSlice: number): Keyframe[] {
   }));
 
   const keyframes: Keyframe[] = [];
-  // para cada par consecutivo interpolamos...
   for (let i = 0; i < frames.length; i++) {
     const curr = frames[i];
     // siempre añado el frame exacto de la fecha

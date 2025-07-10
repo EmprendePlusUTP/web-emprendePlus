@@ -1,8 +1,11 @@
+/** @format */
+
 // src/pages/BusinessSettings.tsx
 import React from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../components/Modal"; // para previsualizar la factura
 import { useAuth0 } from "@auth0/auth0-react";
+import { toast } from "react-toastify";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -34,7 +37,7 @@ type BusinessForm = {
 };
 
 export default function BusinessSettings() {
-  const {getAccessTokenSilently} = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   const { register, handleSubmit, watch, formState } = useForm<BusinessForm>({
     defaultValues: {
       currency: "USD",
@@ -58,7 +61,7 @@ export default function BusinessSettings() {
           scope: "openid profile email",
         },
       });
-  
+
       const payload = {
         name: data.name,
         description: data.tagline,
@@ -81,27 +84,29 @@ export default function BusinessSettings() {
         number_format: data.numberFormat,
         // logo_url: puedes subir esto aparte si manejas imágenes en otra API
       };
-      
-  
-      const res = await fetch("http://localhost:8000/api/business/update-business/", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-  
+
+      const res = await fetch(
+        "http://localhost:8000/api/business/update-business/",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
       if (!res.ok) {
         throw new Error("Error al actualizar el negocio");
       }
-  
+
       const result = await res.json();
       console.log("Negocio actualizado:", result);
-      alert("Configuración guardada con éxito.");
+      toast.success("Configuración guardada con éxito");
     } catch (err) {
       console.error(err);
-      alert("Ocurrió un error al guardar los cambios.");
+      toast.error("Ocurrió un error al guardar los cambios");
     }
   };
 
@@ -256,7 +261,6 @@ export default function BusinessSettings() {
                 />
               </div>
               <div>
-
                 <select
                   {...register("paymentTermsUnit")}
                   className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"

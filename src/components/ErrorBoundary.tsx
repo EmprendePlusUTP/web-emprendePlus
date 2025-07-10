@@ -1,5 +1,7 @@
+/** @format */
+
 // src/components/ErrorBoundary.tsx
-import React from 'react';
+import React from "react";
 
 type Props = { children: React.ReactNode };
 type State = {
@@ -17,14 +19,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("ErrorBoundary capturó:", error, info.componentStack);
-    // Guarda el componentStack para mostrarlo en el UI:
     this.setState({ componentStack: info.componentStack ?? undefined });
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: 20, color: 'red', whiteSpace: 'pre-wrap' }}>
+        <div style={{ padding: 20, color: "red", whiteSpace: "pre-wrap" }}>
           <h2>Ha ocurrido un error 😵‍💫</h2>
           <h3>Mensaje:</h3>
           <pre>{this.state.error?.message}</pre>

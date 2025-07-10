@@ -1,3 +1,5 @@
+/** @format */
+
 import ResponsiveChartWrapper from "./ResponsiveChartWrapper";
 import SunburstBase, { DataNode } from "./SunburstBase";
 type SunburstChartsProps = {

@@ -1,3 +1,5 @@
+/** @format */
+
 // src/pages/AuthPage.tsx
 import { useState } from "react";
 import AuthForm from "../../components/AuthForm";

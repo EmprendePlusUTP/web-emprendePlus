@@ -23,7 +23,7 @@ export function getPanamaDayAndHour(isoDate: string) {
     date.getTime() - (date.getTimezoneOffset() + 5 * 60) * 60000
   );
 
-  const dayIndex = panamaDate.getDay(); // 0=Domingo ... 6=Sábado
+  const dayIndex = panamaDate.getDay();
   const hour = panamaDate.getHours();
 
   return { day: dayIndex, hour };

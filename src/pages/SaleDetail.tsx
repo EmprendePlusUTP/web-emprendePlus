@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { fetchSaleById } from "../services/salesServices";
-import { DetailedSale, SaleProduct } from "../types/saleTypes";
+import { DetailedSale } from "../types/saleTypes";
 import TableCard from "../components/TableCard";
 import DataTable from "../components/DataTable";
 import { Column } from "../components/BaseTable";

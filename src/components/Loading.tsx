@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/Loading.tsx
 import React from "react";
 

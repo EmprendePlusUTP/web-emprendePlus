@@ -25,9 +25,7 @@ export interface DataPoint {
 
 interface LineChartProps {
   data: DataPoint[];
-  /** Ancho virtual para el viewBox (y también ancho máximo en px) */
   width?: number;
-  /** Alto virtual para el viewBox (se escalará proporcionalmente) */
   height?: number;
   margin?: { top: number; right: number; bottom: number; left: number };
 }
@@ -74,7 +72,6 @@ const LineChart: React.FC<LineChartProps> = ({
       );
     const yAxisG = g.append("g").call(axisLeft(yScale).ticks(5));
 
-    // Hacer que ejes tomen el color de texto actual (tailwind "text-*" / dark:text-*)
     [xAxisG, yAxisG].forEach((axisG) => {
       axisG.selectAll("path, line").attr("stroke", "currentColor");
       axisG.selectAll("text").attr("fill", "currentColor");

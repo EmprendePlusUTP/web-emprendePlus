@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/FullPageLoader.tsx
 import React from "react";
 import LoadingPulse from "./LoadingPulse";

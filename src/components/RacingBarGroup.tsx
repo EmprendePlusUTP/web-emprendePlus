@@ -1,3 +1,5 @@
+/** @format */
+
 // src/components/RacingBarGroup.tsx
 import React from "react";
 import { useTransition, animated } from "react-spring";

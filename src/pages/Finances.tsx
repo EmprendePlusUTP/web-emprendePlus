@@ -159,7 +159,6 @@ export const FinancesPage: React.FC = () => {
               >
                 Simulación Gráfico de Barras
               </button>
-              {/* Puedes agregar más botones para otras simulaciones aquí */}
             </div>
             <div className="mt-6">
               {selectedSim === "bar" && (
@@ -170,7 +169,7 @@ export const FinancesPage: React.FC = () => {
                   />
                 </ChartCard>
               )}
-              {/* Renderiza otras simulaciones según selectedSim */}
+              {/* Renderizar otras simulaciones según selectedSim */}
             </div>
           </div>
         </Modal>
