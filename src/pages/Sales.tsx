@@ -25,9 +25,6 @@ import {
 import { ProductDetails } from "../hooks/useProductDetails";
 
 export default function Sales() {
-  const now = new Date();
-  const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, ""); // Ej: "20250718"
-
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [products, setProducts] = useState<ProductDetails[]>([]);

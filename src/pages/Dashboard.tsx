@@ -176,7 +176,7 @@ export default function Dashboard() {
           })}`}
           changeBadge={
             monthlyChange.change ? (
-              <ChangeBadge percent={monthlyChange.change} />
+              <ChangeBadge percent={parseFloat(monthlyChange.change.toFixed(1))} />
             ) : null
           }
         >
