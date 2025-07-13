@@ -3,10 +3,11 @@
 // src/pages/BusinessSettings.tsx
 import React from "react";
 import { useForm } from "react-hook-form";
-import Modal from "../components/Modal"; // para previsualizar la factura
+import Modal from "../components/Modal"; 
 import { useAuth0 } from "@auth0/auth0-react";
 import { updateBusinessSettings } from "../services/businessServices";
 import { toast } from "react-toastify";
+import InvoicePDFPreview from "../components/InvoicePDFPreview";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -73,8 +74,8 @@ export default function BusinessSettings() {
         phone: data.phone,
         email: data.email,
         currency: data.currency,
-        invoice_prefix: data.invoicePrefix,
-        invoice_counter: data.invoiceCounter,
+        invoice_prefix: data.invoicePrefix, 
+        invoice_counter: data.invoiceCounter, 
         payment_terms_amount: data.paymentTermsAmount,
         payment_terms_unit: data.paymentTermsUnit,
         bank_details: data.bankDetails,
@@ -352,11 +353,8 @@ export default function BusinessSettings() {
       {showPreview && (
         <Modal onClose={() => setShowPreview(false)}>
           {/* Aquí renderizas un PDF o imagen de la plantilla */}
-          <iframe
-            src="/api/invoice/preview"
-            className="w-full h-[500px] rounded"
-            title="Previsualización de factura"
-          />
+          <InvoicePDFPreview />
+
         </Modal>
       )}
     </div>

@@ -11,12 +11,18 @@ import { SaleFromAPI, SaleProduct } from "../types/saleTypes";
 import { useAuth0 } from "@auth0/auth0-react";
 import { createSale, fetchSales } from "../services/salesServices";
 import Modal from "../components/Modal";
-import { Product } from "../components/ProductCard"; // si ya tienes ese tipo
+import { Product } from "../components/ProductCard"; 
 import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
 import LoadingPulse from "../components/LoadingPulse";
 import { getPanamaISOString } from "../utils/localeTimeZone";
 import { toast } from "react-toastify";
+import InvoicePDF from "../components/InvoicePDF";
+import { pdf } from "@react-pdf/renderer";
+import {
+  BusinessSettingsPayload,
+  getBusinessSettings,
+} from "../services/businessServices";
 
 export default function Sales() {
   const navigate = useNavigate();
@@ -28,6 +34,7 @@ export default function Sales() {
       name: string;
       quantity: number;
       price: number;
+      discount: number; 
       subtotal: number;
     }[]
   >([]);
@@ -38,6 +45,10 @@ export default function Sales() {
   const [allSales, setAllSales] = useState<SaleFromAPI[]>([]);
   const [salesByProduct, setSalesByProduct] = useState<SaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [invoiceBlob, setInvoiceBlob] = useState<Blob | null>(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsPayload>()
 
   const handleCloseModal = () => {
     setShowCreateSale(false);
@@ -53,6 +64,19 @@ export default function Sales() {
     { title: "Valor medio", value: `$${averageValue.toFixed(2)}` },
     { title: "Artículos vendidos", value: totalItems.toString() },
   ];
+  useEffect(() => {
+  const fetchSettings = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const data = await getBusinessSettings(token);
+      setBusinessSettings(data);
+    } catch (err) {
+      console.error("Error obteniendo settings del negocio:", err);
+    }
+  };
+
+  fetchSettings();
+}, []);
 
   useEffect(() => {
     const load = async () => {
@@ -89,7 +113,7 @@ export default function Sales() {
   const hasFetchedRef = useRef(false);
 
   const salesColumns: Column<SaleFromAPI>[] = [
-    { key: "id", header: "ID" },
+    { key: "invoice_id", header: "ID" },
     {
       key: "sale_date",
       header: "Fecha",
@@ -145,6 +169,8 @@ export default function Sales() {
         </div>
       </div>
     );
+
+   
 
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
@@ -219,13 +245,24 @@ export default function Sales() {
               onChange={(e) => setQuantity(Number(e.target.value))}
               className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
             />
+            <label className="block text-sm font-medium text-gray-700 dark:text-neutral-300">
+              Descuento por unidad
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={discount}
+              onChange={(e) => setDiscount(Number(e.target.value))}
+              className="w-full border px-3 py-2 rounded bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-100"
+            />
 
             <button
               onClick={() => {
                 const product = products.find((p) => p.sku === selectedSku);
                 if (!product || quantity <= 0) return;
 
-                const subtotal = product.sale_price * quantity;
+                const subtotal = (product.sale_price - discount) * quantity;
                 setSelectedProducts((prev) => [
                   ...prev,
                   {
@@ -233,6 +270,7 @@ export default function Sales() {
                     name: product.name,
                     quantity,
                     price: product.sale_price,
+                    discount: 0,
                     subtotal,
                   },
                 ]);
@@ -298,11 +336,28 @@ export default function Sales() {
                       products: selectedProducts.map((p) => ({
                         product_id: p.sku,
                         quantity: p.quantity,
+                        discount:p.discount,
                         subtotal: p.subtotal,
                       })),
                     },
                     token
                   );
+                  const updatedSettings = await getBusinessSettings(token);
+                  setBusinessSettings(updatedSettings);
+                  const blob = await pdf(
+                    <InvoicePDF
+                      saleDate={getPanamaISOString()}
+                      products={selectedProducts}
+                      total={selectedProducts.reduce(
+                        (acc, p) => acc + p.subtotal,
+                        0
+                      )}
+                      businessSettings={updatedSettings}
+                    />
+                  ).toBlob();
+
+                  setInvoiceBlob(blob);
+                  setShowInvoiceModal(true);
 
                   // 2) Refrescar sólo los datos
                   const rawSales = await fetchSales(token);
@@ -316,6 +371,7 @@ export default function Sales() {
                     )
                   );
                   setSalesByProduct(flat);
+                  
 
                   toast.success("Venta registrada correctamente");
                   handleCloseModal();
@@ -328,6 +384,29 @@ export default function Sales() {
             >
               Guardar Venta
             </button>
+          </div>
+        </Modal>
+      )}
+      {showInvoiceModal && invoiceBlob && (
+        <Modal onClose={() => setShowInvoiceModal(false)}>
+          <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-neutral-200">
+            ¿Desea descargar la factura?
+          </h2>
+          <div className="flex justify-end gap-3">
+            <button
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              onClick={() => setShowInvoiceModal(false)}
+            >
+              No
+            </button>
+            <a
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              href={URL.createObjectURL(invoiceBlob)}
+              download="factura.pdf"
+              onClick={() => setShowInvoiceModal(false)}
+            >
+              Sí, descargar
+            </a>
           </div>
         </Modal>
       )}

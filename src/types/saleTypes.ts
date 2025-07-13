@@ -11,6 +11,7 @@ export type SaleProduct = {
 export type SaleFromAPI = {
   id: string;
   sale_date: string;
+  invoice_id: string
   total: number;
   sale_products: SaleProduct[];
 };
@@ -27,6 +28,7 @@ export type DetailedSaleProduct = {
 
 export type DetailedSale = {
   sale_id: string;
+  invoice_id:string;
   sale_date: string;
   total: number;
   products: DetailedSaleProduct[];

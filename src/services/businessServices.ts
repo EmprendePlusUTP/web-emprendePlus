@@ -1,7 +1,7 @@
 // src/services/businessServices.ts
 
 
-interface BusinessSettingsPayload {
+export type BusinessSettingsPayload = {
   name: string;
   description: string;
   tagline: string;
@@ -22,6 +22,26 @@ interface BusinessSettingsPayload {
   date_format: string;
   number_format: string;
 }
+
+export const getBusinessSettings = async (token: string) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const response = await fetch(`${API_URL}/api/business/business-settings`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    console.error("Error al obtener configuración del negocio:", error);
+    throw new Error("No se pudo obtener la configuración del negocio");
+  }
+
+  return await response.json();
+};
+
 
 export const updateBusinessSettings = async (
   payload: BusinessSettingsPayload,
@@ -77,3 +97,4 @@ export const updateBusinessName = async (
 
   return await response.json();
 };
+
