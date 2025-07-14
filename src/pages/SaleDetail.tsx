@@ -8,27 +8,40 @@ import { DetailedSale } from "../types/saleTypes";
 import TableCard from "../components/TableCard";
 import DataTable from "../components/DataTable";
 import { Column } from "../components/BaseTable";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import InvoicePDF from "../components/InvoicePDF";
+import { BusinessSettingsPayload } from "../services/businessServices";
+import { getBusinessSettings } from "../services/businessServices";
 
 export default function SaleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [sale, setSale] = useState<DetailedSale | null>(null);
+  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsPayload | null>(null);
+
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        if (!isAuthenticated || !id) return;
-        const token = await getAccessTokenSilently();
-        const data = await fetchSaleById(id, token);
-        setSale(data);
-      } catch (e) {
-        console.error("Error loading sale", e);
-      }
-    };
+  const load = async () => {
+    try {
+      if (!isAuthenticated || !id) return;
+      const token = await getAccessTokenSilently();
 
-    load();
-  }, [id, isAuthenticated]);
+      const [saleData, settingsData] = await Promise.all([
+        fetchSaleById(id, token),
+        getBusinessSettings(token),
+      ]);
+
+      setSale(saleData);
+      setBusinessSettings(settingsData);
+    } catch (e) {
+      console.error("Error loading sale or business settings", e);
+    }
+  };
+
+  load();
+}, [id, isAuthenticated]);
+
 
   const productColumns: Column<DetailedSale["products"][number]>[] = [
     {
@@ -70,8 +83,36 @@ export default function SaleDetail() {
 
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Venta #{sale.sale_id}</h1>
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <div className="flex items-center gap-4 flex-wrap">
+          <h1 className="text-2xl font-bold">Venta {sale.invoice_id}</h1>
+          {sale && businessSettings && (
+            <PDFDownloadLink
+              document={
+                <InvoicePDF
+                  saleDate={sale.sale_date}
+                  products={sale.products.map((p) => ({
+                    name: p.name,
+                    quantity: p.quantity,
+                    price: p.price,
+                    discount: p.discount ?? 0,
+                    subtotal: p.subtotal,
+                  }))}
+                  total={sale.total}
+                  entrepreneurName={businessSettings?.legal_name}
+                  businessSettings={businessSettings}
+                />
+              }
+              fileName={`factura-${sale.invoice_id}.pdf`}
+              className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 transition text-sm"
+            >
+              {({ loading }) =>
+                loading ? "Generando..." : "Descargar factura"
+              }
+            </PDFDownloadLink>
+          )}
+        </div>
+
         <button
           onClick={() => navigate("/sales")}
           className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
