@@ -15,7 +15,7 @@ export type ProductDetails = {
   cost: number;
   discount?: number;
   stock: number;
-  minStockAlert: number;
+  min_stock_alert: number;
   supplier: string;
   status: "active" | "draft" | "archived";
   color: string;
