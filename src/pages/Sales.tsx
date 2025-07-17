@@ -11,7 +11,6 @@ import { SaleFromAPI, SaleProduct } from "../types/saleTypes";
 import { useAuth0 } from "@auth0/auth0-react";
 import { createSale, fetchSales } from "../services/salesServices";
 import Modal from "../components/Modal";
-import { Product } from "../components/ProductCard"; 
 import { fetchProducts } from "../services/productServices";
 import { computeSalesStats } from "../utils/computeStats";
 import LoadingPulse from "../components/LoadingPulse";
@@ -23,18 +22,19 @@ import {
   BusinessSettingsPayload,
   getBusinessSettings,
 } from "../services/businessServices";
+import { ProductDetails } from "../hooks/useProductDetails";
 
 export default function Sales() {
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductDetails[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<
     {
       sku: string;
       name: string;
       quantity: number;
       price: number;
-      discount: number; 
+      discount: number;
       subtotal: number;
     }[]
   >([]);
@@ -48,7 +48,8 @@ export default function Sales() {
   const [invoiceBlob, setInvoiceBlob] = useState<Blob | null>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsPayload>()
+  const [businessSettings, setBusinessSettings] =
+    useState<BusinessSettingsPayload>();
 
   const handleCloseModal = () => {
     setShowCreateSale(false);
@@ -65,18 +66,18 @@ export default function Sales() {
     { title: "Artículos vendidos", value: totalItems.toString() },
   ];
   useEffect(() => {
-  const fetchSettings = async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      const data = await getBusinessSettings(token);
-      setBusinessSettings(data);
-    } catch (err) {
-      console.error("Error obteniendo settings del negocio:", err);
-    }
-  };
+    const fetchSettings = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const data = await getBusinessSettings(token);
+        setBusinessSettings(data);
+      } catch (err) {
+        console.error("Error obteniendo settings del negocio:", err);
+      }
+    };
 
-  fetchSettings();
-}, []);
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -170,8 +171,6 @@ export default function Sales() {
       </div>
     );
 
-   
-
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -262,6 +261,16 @@ export default function Sales() {
                 const product = products.find((p) => p.sku === selectedSku);
                 if (!product || quantity <= 0) return;
 
+                if (product.stock - quantity <= product.min_stock_alert) {
+                  toast.warn(
+                    ` El producto "${
+                      product.name
+                    }" esta quedando fuera de stock, : ${
+                      product.stock - quantity
+                    } disponibles (mínimo: ${product.min_stock_alert})`
+                  );
+                }
+
                 const subtotal = (product.sale_price - discount) * quantity;
                 setSelectedProducts((prev) => [
                   ...prev,
@@ -336,7 +345,7 @@ export default function Sales() {
                       products: selectedProducts.map((p) => ({
                         product_id: p.sku,
                         quantity: p.quantity,
-                        discount:p.discount,
+                        discount: p.discount,
                         subtotal: p.subtotal,
                       })),
                     },
@@ -371,13 +380,21 @@ export default function Sales() {
                     )
                   );
                   setSalesByProduct(flat);
-                  
 
                   toast.success("Venta registrada correctamente");
                   handleCloseModal();
                 } catch (err: any) {
                   toast.error("Error registrando la venta");
-                  console.error("Error al guardar venta:", err);
+                  selectedProducts.forEach((p) => {
+                    const fullProduct = products.find(
+                      (prod) => prod.sku === p.sku
+                    );
+                    if (fullProduct && fullProduct.stock <= 0) {
+                      toast.error(
+                        `No hay stock disponible para "${p.name}" (SKU: ${p.sku})`
+                      );
+                    }
+                  });
                 }
               }}
               className="py-1 px-4 bg-green-600 text-white rounded hover:bg-green-700 text-sm"

@@ -117,7 +117,6 @@ export default function ProductDetail() {
     try {
       const token = await getAccessTokenSilently();
       let finalSku = skuValue;
-
       if (isNew) {
         toast.info("Guardando producto...");
         await createProductForUser(token, {
@@ -127,6 +126,7 @@ export default function ProductDetail() {
           cost: data.cost,
           sale_price: data.sale_price,
           stock: data.stock,
+          min_stock_alert: data.min_stock_alert,
         });
         finalSku = data.sku;
       } else {
@@ -136,6 +136,7 @@ export default function ProductDetail() {
           cost: data.cost,
           sale_price: data.sale_price,
           stock: data.stock,
+          min_stock_alert: data.min_stock_alert,
         });
       }
 
@@ -369,7 +370,7 @@ export default function ProductDetail() {
                 </label>
                 <input
                   type="number"
-                  {...register("minStockAlert", { valueAsNumber: true })}
+                  {...register("min_stock_alert", { valueAsNumber: true })}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
