@@ -25,6 +25,9 @@ import {
 import { ProductDetails } from "../hooks/useProductDetails";
 
 export default function Sales() {
+  const now = new Date();
+  const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, ""); // Ej: "20250718"
+
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [products, setProducts] = useState<ProductDetails[]>([]);
@@ -50,6 +53,7 @@ export default function Sales() {
   const [discount, setDiscount] = useState(0);
   const [businessSettings, setBusinessSettings] =
     useState<BusinessSettingsPayload>();
+  const [dynamicFilename, setDynamicFilename] = useState("factura.pdf");
 
   const handleCloseModal = () => {
     setShowCreateSale(false);
@@ -351,6 +355,7 @@ export default function Sales() {
                     },
                     token
                   );
+
                   const updatedSettings = await getBusinessSettings(token);
                   setBusinessSettings(updatedSettings);
                   const blob = await pdf(
@@ -371,6 +376,27 @@ export default function Sales() {
                   // 2) Refrescar sólo los datos
                   const rawSales = await fetchSales(token);
                   setAllSales(rawSales);
+
+                  const latestSale = rawSales.length
+                    ? rawSales.reduce((a, b) =>
+                        new Date(a.sale_date) > new Date(b.sale_date) ? a : b
+                      )
+                    : null;
+
+                  const formattedDate = latestSale
+                    ? new Date(latestSale.sale_date)
+                        .toISOString()
+                        .slice(0, 10)
+                        .replace(/-/g, "")
+                    : "";
+
+                  const filename = latestSale
+                    ? `factura_${
+                        latestSale.invoice_id || latestSale.id
+                      }_${formattedDate}.pdf`
+                    : "factura.pdf";
+
+                  setDynamicFilename(filename);
 
                   // 3) Reconstruir ventas por producto
                   const flat: SaleProduct[] = [];
@@ -419,7 +445,7 @@ export default function Sales() {
             <a
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
               href={URL.createObjectURL(invoiceBlob)}
-              download="factura.pdf"
+              download={dynamicFilename}
               onClick={() => setShowInvoiceModal(false)}
             >
               Sí, descargar

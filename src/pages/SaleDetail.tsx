@@ -18,30 +18,29 @@ export default function SaleDetail() {
   const navigate = useNavigate();
   const { getAccessTokenSilently, isAuthenticated } = useAuth0();
   const [sale, setSale] = useState<DetailedSale | null>(null);
-  const [businessSettings, setBusinessSettings] = useState<BusinessSettingsPayload | null>(null);
-
+  const [businessSettings, setBusinessSettings] =
+    useState<BusinessSettingsPayload | null>(null);
 
   useEffect(() => {
-  const load = async () => {
-    try {
-      if (!isAuthenticated || !id) return;
-      const token = await getAccessTokenSilently();
+    const load = async () => {
+      try {
+        if (!isAuthenticated || !id) return;
+        const token = await getAccessTokenSilently();
 
-      const [saleData, settingsData] = await Promise.all([
-        fetchSaleById(id, token),
-        getBusinessSettings(token),
-      ]);
+        const [saleData, settingsData] = await Promise.all([
+          fetchSaleById(id, token),
+          getBusinessSettings(token),
+        ]);
 
-      setSale(saleData);
-      setBusinessSettings(settingsData);
-    } catch (e) {
-      console.error("Error loading sale or business settings", e);
-    }
-  };
+        setSale(saleData);
+        setBusinessSettings(settingsData);
+      } catch (e) {
+        console.error("Error loading sale or business settings", e);
+      }
+    };
 
-  load();
-}, [id, isAuthenticated]);
-
+    load();
+  }, [id, isAuthenticated]);
 
   const productColumns: Column<DetailedSale["products"][number]>[] = [
     {
@@ -80,7 +79,13 @@ export default function SaleDetail() {
   if (!sale) {
     return <p className="text-center text-gray-500">Cargando venta...</p>;
   }
+  const formattedDate = sale
+    ? new Date(sale.sale_date).toISOString().slice(0, 10).replace(/-/g, "")
+    : "";
 
+  const dynamicFilename = sale
+    ? `factura_${sale.invoice_id}_${formattedDate}.pdf`
+    : "factura.pdf";
   return (
     <div className="space-y-6 text-gray-800 dark:text-neutral-200">
       <div className="flex justify-between items-center flex-wrap gap-2">
@@ -103,7 +108,7 @@ export default function SaleDetail() {
                   businessSettings={businessSettings}
                 />
               }
-              fileName={`factura-${sale.invoice_id}.pdf`}
+              fileName={dynamicFilename}
               className="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 transition text-sm"
             >
               {({ loading }) =>
