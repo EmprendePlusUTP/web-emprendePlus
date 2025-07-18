@@ -17,6 +17,7 @@ import FinancesDetails from "./pages/FinancesDetails";
 import SaleDetail from "./pages/SaleDetail";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import BannedPage from "./pages/BanPage";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
           <Route path="finances/details" element={<FinancesDetails />} />
           <Route path="/sales/:id" element={<SaleDetail />} />
         </Route>
+          <Route path="/banned" element={<BannedPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />

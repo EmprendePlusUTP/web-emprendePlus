@@ -6,6 +6,7 @@ import {
   getUserProfile,
   registerUserSession,
 } from "../services/userProfileServices";
+import { useNavigate } from "react-router-dom";
 
 type UserProfile = {
   user: {
@@ -22,6 +23,7 @@ export function useUserProfile() {
   const [data, setData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const hasRegistered = useRef(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,6 +49,7 @@ export function useUserProfile() {
             name: user.name,
           },
           token,
+           () => navigate("/banned", { replace: true }),
           () =>
             logout({
               logoutParams: {

@@ -9,6 +9,7 @@ import { updateBusinessSettings } from "../services/businessServices";
 import { toast } from "react-toastify";
 import InvoicePDFPreview from "../components/InvoicePDFPreview";
 import { generateDummyData } from "../services/dummyDataServices";
+import { useSecurity } from "../contexts/SecurityContext";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -40,8 +41,9 @@ type BusinessForm = {
 };
 
 export default function BusinessSettings() {
+  const { checkAll } = useSecurity();
   const { getAccessTokenSilently } = useAuth0();
-  const { register, handleSubmit, watch, formState } = useForm<BusinessForm>({
+  const { register, handleSubmit,watch, formState } = useForm<BusinessForm>({
     defaultValues: {
       currency: "USD",
       invoicePrefix: "",
@@ -127,6 +129,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("name", { required: true })}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -136,6 +141,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("tagline")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -147,6 +155,9 @@ export default function BusinessSettings() {
               type="file"
               accept="image/*"
               {...register("logo")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
                          file:rounded file:border-0 file:text-sm file:font-semibold
                          file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -169,6 +180,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("legalName")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -178,6 +192,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("taxId")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -187,6 +204,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("fiscalAddress")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -196,6 +216,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("phone")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -206,6 +229,9 @@ export default function BusinessSettings() {
             <input
               type="email"
               {...register("email")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -219,6 +245,9 @@ export default function BusinessSettings() {
             </label>
             <select
               {...register("currency")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             >
               <option value="PAB">PAB</option>
@@ -234,6 +263,9 @@ export default function BusinessSettings() {
             <input
               placeholder="e.g. INV-"
               {...register("invoicePrefix")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -244,6 +276,9 @@ export default function BusinessSettings() {
             <input
               type="number"
               {...register("invoiceCounter", { valueAsNumber: true })}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -257,12 +292,18 @@ export default function BusinessSettings() {
                   placeholder="Cantidad"
                   type="number"
                   {...register("paymentTermsAmount", { valueAsNumber: true })}
+                  onChange={(e) => {
+                    checkAll(e.target.value);
+                  }}
                   className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
               <div>
                 <select
                   {...register("paymentTermsUnit")}
+                  onChange={(e) => {
+                    checkAll(e.target.value);
+                  }}
                   className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 >
                   <option value="días">Días</option>
@@ -279,6 +320,9 @@ export default function BusinessSettings() {
             <textarea
               {...register("bankDetails")}
               rows={2}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -289,6 +333,9 @@ export default function BusinessSettings() {
             <input
               {...register("taxRates")}
               placeholder="e.g. IVA:21%, IGV:18%"
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -309,6 +356,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("timezone")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -318,6 +368,9 @@ export default function BusinessSettings() {
             </label>
             <select
               {...register("language")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             >
               <option value="es">Español</option>
@@ -330,6 +383,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("dateFormat")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -339,6 +395,9 @@ export default function BusinessSettings() {
             </label>
             <input
               {...register("numberFormat")}
+              onChange={(e) => {
+                checkAll(e.target.value);
+              }}
               className="mt-1 block w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
             />
           </div>
@@ -409,12 +468,13 @@ export default function BusinessSettings() {
                     disabled={isGenerating}
                     min={0}
                     value={dummyParams[field as keyof typeof dummyParams]}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      checkAll(e.target.value);
                       setDummyParams((prev) => ({
                         ...prev,
                         [field]: parseInt(e.target.value),
-                      }))
-                    }
+                      }));
+                    }}
                     className="mt-1 w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                 </div>

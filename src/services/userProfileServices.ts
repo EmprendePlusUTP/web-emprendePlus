@@ -7,6 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 export async function registerUserSession(
   user: { sub: string; email: string; name: string },
   token: string,
+  onBan: () => void,
   logout: () => void
 ) {
   return retryWithLogoutFallback(
@@ -23,6 +24,11 @@ export async function registerUserSession(
           name: user.name,
         }),
       });
+
+      if (res.status === 403) {
+        onBan();
+        return;
+      }
 
       if (!res.ok) throw new Error("Error al registrar sesión");
       return res.json();

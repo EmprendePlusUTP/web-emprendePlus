@@ -1,6 +1,7 @@
 /** @format */
 
 // src/pages/ProductPage.tsx
+// src/pages/ProductDetail.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -17,12 +18,14 @@ import {
 import { ProductDetails } from "../hooks/useProductDetails";
 import LoadingPulse from "../components/LoadingPulse";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { useSecurity } from "../contexts/SecurityContext";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const isNew = id === "new";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const { checkAll } = useSecurity();
 
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -204,14 +207,18 @@ export default function ProductDetail() {
           <input
             {...register("name", { required: true })}
             value={nameValue}
-            onChange={(e) => setNameValue(e.target.value)}
-            onBlur={() => {
+            onChange={(e) => {
+              checkAll(e.target.value);
+              setNameValue(e.target.value);
+            }}
+            onBlur={(e) => {
               setEditingName(false);
               setValue("name", nameValue, { shouldValidate: true });
             }}
             placeholder="Nombre del producto"
             className="text-3xl font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-300 focus:outline-none"
           />
+
         ) : (
           <h1 className="text-3xl font-semibold text-gray-800 dark:text-gray-100 mr-2">
             {nameValue}
@@ -273,8 +280,11 @@ export default function ProductDetail() {
                 <input
                   {...register("sku", { required: true })}
                   value={skuValue}
-                  onChange={(e) => setSkuValue(e.target.value)}
-                  onBlur={() => {
+                  onChange={(e) => {
+                    checkAll(e.target.value);
+                    setSkuValue(e.target.value);
+                  }}
+                  onBlur={(e) => {
                     const original = product?.sku || "";
                     const isEditing = !isNew;
                     if (skuValue !== original && isEditing) {
@@ -286,6 +296,7 @@ export default function ProductDetail() {
                   }}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
+
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -310,8 +321,10 @@ export default function ProductDetail() {
               <textarea
                 {...register("description")}
                 rows={4}
+                onChange={(e) => checkAll(e.target.value)}
                 className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
               />
+
             </div>
 
             {/* Precios e inventario */}
@@ -327,6 +340,7 @@ export default function ProductDetail() {
                     valueAsNumber: true,
                     required: true,
                   })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -338,6 +352,7 @@ export default function ProductDetail() {
                   type="number"
                   step="0.01"
                   {...register("cost", { valueAsNumber: true })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -348,6 +363,7 @@ export default function ProductDetail() {
                 <input
                   type="number"
                   {...register("discount", { valueAsNumber: true })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -361,6 +377,7 @@ export default function ProductDetail() {
                     valueAsNumber: true,
                     required: true,
                   })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -371,6 +388,7 @@ export default function ProductDetail() {
                 <input
                   type="number"
                   {...register("min_stock_alert", { valueAsNumber: true })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -387,18 +405,21 @@ export default function ProductDetail() {
                     type="number"
                     placeholder="Ancho"
                     {...register("width", { valueAsNumber: true })}
+                    onChange={(e) => checkAll(e.target.value)}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                   <input
                     type="number"
                     placeholder="Alto"
                     {...register("height", { valueAsNumber: true })}
+                    onChange={(e) => checkAll(e.target.value)}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                   <input
                     type="number"
                     placeholder="Prof."
                     {...register("depth", { valueAsNumber: true })}
+                    onChange={(e) => checkAll(e.target.value)}
                     className="w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                   />
                 </div>
@@ -411,6 +432,7 @@ export default function ProductDetail() {
                   type="number"
                   step="0.01"
                   {...register("weight", { valueAsNumber: true })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
@@ -422,6 +444,7 @@ export default function ProductDetail() {
                   type="number"
                   step="0.01"
                   {...register("tax_rate", { valueAsNumber: true })}
+                  onChange={(e) => checkAll(e.target.value)}
                   className="mt-1 w-full border border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
                 />
               </div>
