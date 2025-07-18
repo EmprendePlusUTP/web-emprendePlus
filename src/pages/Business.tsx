@@ -3,11 +3,12 @@
 // src/pages/BusinessSettings.tsx
 import React from "react";
 import { useForm } from "react-hook-form";
-import Modal from "../components/Modal"; 
+import Modal from "../components/Modal";
 import { useAuth0 } from "@auth0/auth0-react";
 import { updateBusinessSettings } from "../services/businessServices";
 import { toast } from "react-toastify";
 import InvoicePDFPreview from "../components/InvoicePDFPreview";
+import { generateDummyData } from "../services/dummyDataServices";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -54,6 +55,14 @@ export default function BusinessSettings() {
     },
   });
   const [showPreview, setShowPreview] = React.useState(false);
+  const [showDummyModal, setShowDummyModal] = React.useState(false);
+  const [dummyParams, setDummyParams] = React.useState({
+    products: 0,
+    sales: 0,
+    finances: 0,
+    budgets: 0,
+  });
+  const [isGenerating, setIsGenerating] = React.useState(false);
 
   const onSubmit = async (data: BusinessForm) => {
     try {
@@ -74,8 +83,8 @@ export default function BusinessSettings() {
         phone: data.phone,
         email: data.email,
         currency: data.currency,
-        invoice_prefix: data.invoicePrefix, 
-        invoice_counter: data.invoiceCounter, 
+        invoice_prefix: data.invoicePrefix,
+        invoice_counter: data.invoiceCounter,
         payment_terms_amount: data.paymentTermsAmount,
         payment_terms_unit: data.paymentTermsUnit,
         bank_details: data.bankDetails,
@@ -101,6 +110,13 @@ export default function BusinessSettings() {
       <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
         Configuración de Mi Emprendimiento
       </h1>
+
+      <button
+        onClick={() => setShowDummyModal(true)}
+        className="px-4 py-2 rounded bg-gray-200 dark:bg-neutral-700 hover:bg-gray-300 dark:hover:bg-neutral-600 transition"
+      >
+        Generar datos de prueba
+      </button>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* 1. Identidad Básica */}
@@ -354,7 +370,72 @@ export default function BusinessSettings() {
         <Modal onClose={() => setShowPreview(false)}>
           {/* Aquí renderizas un PDF o imagen de la plantilla */}
           <InvoicePDFPreview />
-
+        </Modal>
+      )}
+      {showDummyModal && (
+        <Modal onClose={() => setShowDummyModal(false)}>
+          <h2 className="text-xl font-bold mb-4">Generar datos de prueba</h2>
+          {isGenerating && (
+            <div className="flex justify-center py-4">
+              <div className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          <form
+            className="space-y-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setIsGenerating(true);
+              try {
+                const token = await getAccessTokenSilently();
+                await generateDummyData(token, dummyParams);
+                toast.success("Datos dummy generados correctamente");
+                setShowDummyModal(false);
+              } catch (err) {
+                console.error(err);
+                toast.error("Error generando los datos dummy");
+              } finally {
+                setIsGenerating(false);
+              }
+            }}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              {["products", "sales", "finances", "budgets"].map((field) => (
+                <div key={field}>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+                    {field}
+                  </label>
+                  <input
+                    type="number"
+                    disabled={isGenerating}
+                    min={0}
+                    value={dummyParams[field as keyof typeof dummyParams]}
+                    onChange={(e) =>
+                      setDummyParams((prev) => ({
+                        ...prev,
+                        [field]: parseInt(e.target.value),
+                      }))
+                    }
+                    className="mt-1 w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-4 border-t dark:border-neutral-600">
+              <button
+                type="button"
+                onClick={() => setShowDummyModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Generar
+              </button>
+            </div>
+          </form>
         </Modal>
       )}
     </div>
