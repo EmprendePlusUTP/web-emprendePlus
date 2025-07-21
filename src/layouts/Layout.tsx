@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import { useSQLiDetection } from "../hooks/useSQLiDetection";
 import axios from "axios";
 import { SecurityContext } from "../contexts/SecurityContext";
+import { useToken } from "../hooks/useToken";
 
 const navItems: NavItem[] = [
   { label: "Inicio", to: "/", icon: <House /> },
@@ -28,7 +29,8 @@ const navItems: NavItem[] = [
 ];
 
 const Layout: React.FC = () => {
-  const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
+  const { user, isAuthenticated, logout } = useAuth0();
+  const { getTokenWithRetry } = useToken();
   const hasSentSession = useRef(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [showBusinessModal, setShowBusinessModal] = useState(false);
@@ -51,8 +53,8 @@ const Layout: React.FC = () => {
 
       hasSentSession.current = true;
       try {
-        const token = await getAccessTokenSilently();
-
+        const token = await getTokenWithRetry();
+        if (!token) return;
         await registerUserSession(
           {
             sub: user.sub,
@@ -61,9 +63,10 @@ const Layout: React.FC = () => {
           },
           token,
           () => {
-          navigate("/banned", { replace: true });
-        },
-          () =>  logout({
+            navigate("/banned", { replace: true });
+          },
+          () =>
+            logout({
               logoutParams: {
                 returnTo: `${window.location.origin}/auth`,
               },
@@ -77,43 +80,43 @@ const Layout: React.FC = () => {
     };
 
     sendSession();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, navigate, logout]);
 
   const { userData, refetch } = useUserWithBusiness(sessionReady);
 
-const [banCountdown, setBanCountdown] = useState(10);
-const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const [banCountdown, setBanCountdown] = useState(10);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-useEffect(() => {
-  if (showBanModal) {
-    setBanCountdown(10);
-    countdownRef.current = setInterval(() => {
-      setBanCountdown((prev) => prev - 1);
-    }, 1000);
-  }
-  return () => {
+  useEffect(() => {
+    if (showBanModal) {
+      setBanCountdown(10);
+      countdownRef.current = setInterval(() => {
+        setBanCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [showBanModal]);
+
+  useEffect(() => {
+    if (banCountdown === 0 && showBanModal) {
+      logout({
+        logoutParams: {
+          returnTo: `${window.location.origin}/auth`,
+        },
+      });
+    }
+  }, [banCountdown, showBanModal, logout]);
+
+  const handleBanReturn = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
-  };
-}, [showBanModal]);
-
-useEffect(() => {
-  if (banCountdown === 0 && showBanModal) {
     logout({
       logoutParams: {
         returnTo: `${window.location.origin}/auth`,
       },
     });
-  }
-}, [banCountdown, showBanModal, logout]);
-
-const handleBanReturn = () => {
-  if (countdownRef.current) clearInterval(countdownRef.current);
-  logout({
-    logoutParams: {
-      returnTo: `${window.location.origin}/auth`,
-    },
-  });
-};
+  };
 
   useEffect(() => {
     if (userData?.business_name === "Mi negocio") {
@@ -124,7 +127,8 @@ const handleBanReturn = () => {
   const handleUpdateBusiness = async () => {
     if (!newBusinessName.trim()) return;
     try {
-      const token = await getAccessTokenSilently();
+      const token = await getTokenWithRetry();
+      if (!token) return;
       await updateBusinessName(newBusinessName, token);
       toast.success("¡Nombre del negocio actualizado!");
       await refetch();
@@ -142,7 +146,7 @@ const handleBanReturn = () => {
       <div className="min-h-screen flex bg-neutral-900 dark:bg-neutral-900">
         <Sidebar items={navItems} />
         <div className="flex-1 flex flex-col lg:ml-65 transition-all">
-          <Header userData={userData} />
+          <Header />
           <main className="flex-1 p-6 pb-20 min-h-[calc(100vh-64px)]">
             <ScrollToTop />
             <Outlet />

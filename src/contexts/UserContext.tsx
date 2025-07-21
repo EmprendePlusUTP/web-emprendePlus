@@ -2,8 +2,8 @@
 
 // src/contexts/UserContext.tsx
 import React, { createContext, useContext } from "react";
-import { useAuth0 } from "@auth0/auth0-react";
 import Loading from "../components/Loading";
+import { useUserWithBusiness } from "../hooks/useUserBusiness";
 
 export type UserContextType = {
   userId: string;
@@ -26,6 +26,7 @@ export type UserContextType = {
     supplier: string;
     stock: number;
   }[];
+  refetchUserData: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -33,10 +34,9 @@ const UserContext = createContext<UserContextType | null>(null);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user, isLoading, isAuthenticated } = useAuth0();
+  const { userData, refetch } = useUserWithBusiness(true);
 
-  // Mientras Auth0 está cargando o no está autenticado, mostramos Loading
-  if (isLoading || !isAuthenticated || !user) {
+  if (!userData) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loading />
@@ -44,13 +44,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   }
 
-  // Construimos el contexto con datos reales de Auth0 y mocks adicionales
   const ctx: UserContextType = {
-    userId: user.sub || "",
-    userName: user.name || "",
-    businessName: "EmprendePlus",
+    userId: userData.id,
+    userName: userData.name,
+    businessName: userData.business.name,
     currency: "USD",
-
     salesHistory: [],
     topProduct: {
       id: "",
@@ -61,6 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       stock: 0,
     },
     productList: [],
+    refetchUserData: refetch,
   };
 
   return <UserContext.Provider value={ctx}>{children}</UserContext.Provider>;

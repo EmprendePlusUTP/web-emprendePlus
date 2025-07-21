@@ -13,7 +13,7 @@ interface UserWithBusiness {
   id: string;
   name: string;
   business_name: string | null;
-  businesses: Business[];
+  business: Business;
 }
 
 export const useUserWithBusiness = (enabled = true) => {

@@ -1,6 +1,6 @@
 /** @format */
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import UserDropdown from "./UserDropdown";
@@ -9,19 +9,14 @@ import {
   saveAvatarToCache,
   clearCachedAvatar,
 } from "../utils/avatarCache";
+import { useUserContext } from "../contexts/UserContext";
 
-type HeaderProps = {
-  userData: {
-    business_name: string | null;
-  } | null;
-};
-
-const Header: React.FC<HeaderProps> = ({ userData }) => {
+const Header = () => {
   const { user, isAuthenticated, logout, isLoading } = useAuth0();
   const navigate = useNavigate();
   const location = useLocation();
-  const businessName = userData?.business_name || "EmprendePlus";
 
+  const { businessName } = useUserContext();
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
   // 1. Al cargar, busca la imagen cacheada
