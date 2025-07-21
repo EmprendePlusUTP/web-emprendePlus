@@ -1,15 +1,19 @@
 /** @format */
 
 // src/pages/BusinessSettings.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../components/Modal";
 import { useAuth0 } from "@auth0/auth0-react";
-import { updateBusinessSettings } from "../services/businessServices";
+import {
+  getBusinessSettings,
+  updateBusinessSettings,
+} from "../services/businessServices";
 import { toast } from "react-toastify";
 import InvoicePDFPreview from "../components/InvoicePDFPreview";
 import { generateDummyData } from "../services/dummyDataServices";
 import { useSecurity } from "../contexts/SecurityContext";
+import { useUserContext } from "../contexts/UserContext";
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -42,20 +46,22 @@ type BusinessForm = {
 
 export default function BusinessSettings() {
   const { checkAll } = useSecurity();
+  const { refetchUserData } = useUserContext();
   const { getAccessTokenSilently } = useAuth0();
-  const { register, handleSubmit,watch, formState } = useForm<BusinessForm>({
-    defaultValues: {
-      currency: "USD",
-      invoicePrefix: "",
-      invoiceCounter: 1,
-      paymentTermsAmount: 30,
-      paymentTermsUnit: "días",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: "es",
-      dateFormat: "dd/mm/aaaa",
-      numberFormat: "1.234,56",
-    },
-  });
+  const { register, handleSubmit, watch, formState, reset } =
+    useForm<BusinessForm>({
+      defaultValues: {
+        currency: "USD",
+        invoicePrefix: "",
+        invoiceCounter: 1,
+        paymentTermsAmount: 30,
+        paymentTermsUnit: "días",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: "es",
+        dateFormat: "dd/mm/aaaa",
+        numberFormat: "1.234,56",
+      },
+    });
   const [showPreview, setShowPreview] = React.useState(false);
   const [showDummyModal, setShowDummyModal] = React.useState(false);
   const [dummyParams, setDummyParams] = React.useState({
@@ -71,7 +77,7 @@ export default function BusinessSettings() {
       const token = await getAccessTokenSilently({
         authorizationParams: {
           audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-          scope: "openid profile email",
+          scope: "openid profile email offline_access",
         },
       });
 
@@ -99,6 +105,7 @@ export default function BusinessSettings() {
 
       await updateBusinessSettings(payload, token);
       toast.success("Configuración guardada con éxito.");
+      await refetchUserData();
     } catch (err) {
       console.error(err);
       toast.error("Ocurrió un error al guardar los cambios");
@@ -106,6 +113,49 @@ export default function BusinessSettings() {
   };
 
   const logoFiles = watch("logo");
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = await getAccessTokenSilently({
+          authorizationParams: {
+            audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+            scope: "openid profile email offline_access",
+          },
+        });
+
+        const data = await getBusinessSettings(token);
+
+        reset({
+          name: data.name || "",
+          tagline: data.tagline || "",
+          legalName: data.legal_name || "",
+          taxId: data.tax_id || "",
+          fiscalAddress: data.fiscal_address || "",
+          phone: data.phone || "",
+          email: data.email || "",
+          currency: data.currency || "USD",
+          invoicePrefix: data.invoice_prefix || "",
+          invoiceCounter: data.invoice_counter || 1,
+          paymentTermsAmount: data.payment_terms_amount || 30,
+          paymentTermsUnit: data.payment_terms_unit || "días",
+          bankDetails: data.bank_details || "",
+          taxRates: data.tax_rates || "",
+          timezone:
+            data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: data.language || "es",
+          dateFormat: data.date_format || "dd/mm/aaaa",
+          numberFormat: data.number_format || "1.234,56",
+          logo: undefined,
+        });
+      } catch (err) {
+        console.error("Error al cargar configuración del negocio:", err);
+        toast.error("No se pudo cargar la configuración del negocio.");
+      }
+    };
+
+    fetchSettings();
+  }, [getAccessTokenSilently, reset]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8 bg-white dark:bg-neutral-800 rounded-lg shadow">

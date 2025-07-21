@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { useAuth0 } from "@auth0/auth0-react";
 import GoogleLogo from "./Logos/GoogleLogo";
 import MicrosoftLogo from "./Logos/MicrosoftLogo";
+import { useAuthService } from "../services/authServices";
 
 export type AuthFormData = {
   email: string;
@@ -26,16 +27,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
     formState: { errors, isSubmitting },
   } = useForm<AuthFormData>();
   const password = watch("password", "");
-  const { loginWithRedirect } = useAuth0();
-
+  const { login, loginWithSocial } = useAuthService();
   const onSubmit = async (data: AuthFormData) => {
-    // Lanza el flujo de Auth0, pasando login_hint y forzando el proveedor si se quiere
-    await loginWithRedirect({
-      authorizationParams: {
-        login_hint: data.email,
-        ...(mode === "signup" ? { screen_hint: "signup" } : {}),
-      },
-    });
+    await login(data.email, mode === "signup" ? "signup" : "login");
   };
 
   return (
@@ -67,11 +61,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
           {/* Google */}
           <button
             type="button"
-            onClick={() =>
-              loginWithRedirect({
-                authorizationParams: { connection: "google-oauth2" },
-              })
-            }
+            onClick={() => loginWithSocial("google-oauth2")}
             className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-none disabled:opacity-50 dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
           >
             {/* SVG Google */}
@@ -87,11 +77,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
           {/* Microsoft */}
           <button
             type="button"
-            onClick={() =>
-              loginWithRedirect({
-                authorizationParams: { connection: "windowslive" },
-              })
-            }
+            onClick={() => loginWithSocial("windowslive")}
             className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 focus:outline-none disabled:opacity-50 dark:bg-neutral-900 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
           >
             {/* SVG Microsoft (ejemplo) */}

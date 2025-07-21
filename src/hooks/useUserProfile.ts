@@ -7,6 +7,7 @@ import {
   registerUserSession,
 } from "../services/userProfileServices";
 import { useNavigate } from "react-router-dom";
+import { useToken } from "./useToken";
 
 type UserProfile = {
   user: {
@@ -19,11 +20,12 @@ type UserProfile = {
 };
 
 export function useUserProfile() {
-  const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
+  const { user, isAuthenticated, logout } = useAuth0();
   const [data, setData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const hasRegistered = useRef(false);
   const navigate = useNavigate();
+  const { getTokenWithRetry } = useToken(); // ⬅️ Uso del hook
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +42,8 @@ export function useUserProfile() {
       hasRegistered.current = true;
 
       try {
-        const token = await getAccessTokenSilently();
+        const token = await getTokenWithRetry();
+        if (!token) return;
 
         await registerUserSession(
           {
@@ -49,7 +52,7 @@ export function useUserProfile() {
             name: user.name,
           },
           token,
-           () => navigate("/banned", { replace: true }),
+          () => navigate("/banned", { replace: true }),
           () =>
             logout({
               logoutParams: {
@@ -68,29 +71,7 @@ export function useUserProfile() {
     };
 
     fetchData();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+  }, [isAuthenticated, user, getTokenWithRetry]);
 
   return { data, loading };
-}
-
-export async function retryWithAuthFail<T>(
-  fetchFn: () => Promise<T>,
-  retries: number = 3,
-  delayMs: number = 2000
-): Promise<T | null> {
-  const { logout } = useAuth0();
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fetchFn();
-    } catch (err) {
-      console.warn(`Intento ${i + 1} fallido:`, err);
-      if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs));
-    }
-  }
-
-  // Si falla después de todos los intentos
-  logout({
-    logoutParams: { returnTo: window.location.origin },
-  });
-  return null;
 }
