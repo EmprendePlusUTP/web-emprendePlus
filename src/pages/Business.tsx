@@ -44,6 +44,13 @@ type BusinessForm = {
   numberFormat: string;
 };
 
+const fieldLimits: Record<string, { min: number; max: number }> = {
+  productos: { min: 0, max: 100 },
+  ventas: { min: 0, max: 200 },
+  finanzas: { min: 0, max: 100 },
+  presupuesto: { min: 0, max: 20 },
+};
+
 export default function BusinessSettings() {
   const { checkAll } = useSecurity();
   const { refetchUserData } = useUserContext();
@@ -508,27 +515,30 @@ export default function BusinessSettings() {
             }}
           >
             <div className="grid grid-cols-2 gap-4">
-              {["products", "sales", "finances", "budgets"].map((field) => (
-                <div key={field}>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                    {field}
-                  </label>
-                  <input
-                    type="number"
-                    disabled={isGenerating}
-                    min={0}
-                    value={dummyParams[field as keyof typeof dummyParams]}
-                    onChange={(e) => {
-                      checkAll(e.target.value);
-                      setDummyParams((prev) => ({
-                        ...prev,
-                        [field]: parseInt(e.target.value),
-                      }));
-                    }}
-                    className="mt-1 w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
-                  />
-                </div>
-              ))}
+              {["productos", "ventas", "finanzas", "presupuesto"].map(
+                (field) => (
+                  <div key={field}>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
+                      {field}
+                    </label>
+                    <input
+                      type="number"
+                      disabled={isGenerating}
+                      min={fieldLimits[field].min}
+                      max={fieldLimits[field].max}
+                      value={dummyParams[field as keyof typeof dummyParams]}
+                      onChange={(e) => {
+                        checkAll(e.target.value);
+                        setDummyParams((prev) => ({
+                          ...prev,
+                          [field]: parseInt(e.target.value),
+                        }));
+                      }}
+                      className="mt-1 w-full border-gray-300 rounded p-2 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-white"
+                    />
+                  </div>
+                )
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-4 border-t dark:border-neutral-600">
               <button

@@ -12,14 +12,13 @@ import { registerUserSession } from "../services/userProfileServices";
 import { updateBusinessName } from "../services/businessServices";
 import { NavItem } from "../types/navigation";
 import { House, PackageSearch, HandCoins, BadgeDollarSign } from "lucide-react";
-import { useUserWithBusiness } from "../hooks/useUserBusiness";
-import FullPageLoader from "../components/FullPageLoader";
 import Modal from "../components/Modal";
 import { toast } from "react-toastify";
 import { useSQLiDetection } from "../hooks/useSQLiDetection";
 import axios from "axios";
 import { SecurityContext } from "../contexts/SecurityContext";
 import { useToken } from "../hooks/useToken";
+import { useUserContext } from "../contexts/UserContext";
 
 const navItems: NavItem[] = [
   { label: "Inicio", to: "/", icon: <House /> },
@@ -32,7 +31,7 @@ const Layout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth0();
   const { getTokenWithRetry } = useToken();
   const hasSentSession = useRef(false);
-  const [sessionReady, setSessionReady] = useState(false);
+
   const [showBusinessModal, setShowBusinessModal] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState("");
   const [showBanModal, setShowBanModal] = useState(false);
@@ -72,8 +71,6 @@ const Layout: React.FC = () => {
               },
             })
         );
-
-        setSessionReady(true);
       } catch (err) {
         console.error("❌ Error en registerSession:", err);
       }
@@ -82,7 +79,15 @@ const Layout: React.FC = () => {
     sendSession();
   }, [isAuthenticated, user, navigate, logout]);
 
-  const { userData, refetch } = useUserWithBusiness(sessionReady);
+  const { refetchUserData, businessName } = useUserContext();
+   useEffect(() => {
+    const hasSeenModal = localStorage.getItem("hasSeenBusinessModal");
+
+    if (businessName === "Mi negocio" && !hasSeenModal) {
+      setShowBusinessModal(true);
+      localStorage.setItem("hasSeenBusinessModal", "true");
+    }
+  }, [businessName]);
 
   const [banCountdown, setBanCountdown] = useState(10);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,12 +123,6 @@ const Layout: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    if (userData?.business_name === "Mi negocio") {
-      setShowBusinessModal(true);
-    }
-  }, [userData]);
-
   const handleUpdateBusiness = async () => {
     if (!newBusinessName.trim()) return;
     try {
@@ -131,15 +130,13 @@ const Layout: React.FC = () => {
       if (!token) return;
       await updateBusinessName(newBusinessName, token);
       toast.success("¡Nombre del negocio actualizado!");
-      await refetch();
+      await refetchUserData();
       setShowBusinessModal(false);
     } catch (err) {
       console.error("❌ Error actualizando nombre del negocio:", err);
       toast.error("Hubo un error al actualizar el negocio.");
     }
   };
-
-  if (!userData) return <FullPageLoader />;
 
   return (
     <SecurityContext.Provider value={{ checkAll }}>
