@@ -2,7 +2,6 @@
 
 // src/contexts/UserContext.tsx
 import React, { createContext, useContext } from "react";
-import Loading from "../components/Loading";
 import { useUserWithBusiness } from "../hooks/useUserBusiness";
 
 export type UserContextType = {
@@ -37,17 +36,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const { userData, refetch } = useUserWithBusiness(true);
 
   if (!userData) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loading />
-      </div>
-    );
+    return;
   }
 
   const ctx: UserContextType = {
     userId: userData.id,
     userName: userData.name,
-    businessName: userData.business.name,
+    businessName: userData.business_name || "Mi Negocio",
     currency: "USD",
     salesHistory: [],
     topProduct: {

@@ -18,7 +18,7 @@ interface UserWithBusiness {
 
 export const useUserWithBusiness = (enabled = true) => {
   const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
-  const [userData, setUserData] = useState<UserWithBusiness | null>(null);
+  const [userData, setUserData] = useState<UserWithBusiness>();
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchUserData = useCallback(async () => {

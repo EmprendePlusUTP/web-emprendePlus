@@ -211,7 +211,7 @@ export default function ProductDetail() {
               checkAll(e.target.value);
               setNameValue(e.target.value);
             }}
-            onBlur={(e) => {
+            onBlur={() => {
               setEditingName(false);
               setValue("name", nameValue, { shouldValidate: true });
             }}
@@ -284,7 +284,7 @@ export default function ProductDetail() {
                     checkAll(e.target.value);
                     setSkuValue(e.target.value);
                   }}
-                  onBlur={(e) => {
+                  onBlur={() => {
                     const original = product?.sku || "";
                     const isEditing = !isNew;
                     if (skuValue !== original && isEditing) {
