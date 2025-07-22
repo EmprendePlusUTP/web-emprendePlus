@@ -42,7 +42,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const ctx: UserContextType = {
     userId: userData.id,
     userName: userData.name,
-    businessName: userData.business_name || "Mi Negocio",
+    businessName: userData.business_name || "Mi negocio",
     currency: "USD",
     salesHistory: [],
     topProduct: {

@@ -81,8 +81,7 @@ const Layout: React.FC = () => {
 
   const { refetchUserData, businessName } = useUserContext();
    useEffect(() => {
-    const hasSeenModal = localStorage.getItem("hasSeenBusinessModal");
-
+    const hasSeenModal = localStorage.getItem("hasSeenBusinessModal") === "true";
     if (businessName === "Mi negocio" && !hasSeenModal) {
       setShowBusinessModal(true);
       localStorage.setItem("hasSeenBusinessModal", "true");
@@ -130,6 +129,7 @@ const Layout: React.FC = () => {
       if (!token) return;
       await updateBusinessName(newBusinessName, token);
       toast.success("¡Nombre del negocio actualizado!");
+      localStorage.setItem("hasSeenBusinessModal", "true");
       await refetchUserData();
       setShowBusinessModal(false);
     } catch (err) {
