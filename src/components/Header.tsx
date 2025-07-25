@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import UserDropdown from "./UserDropdown";
 import {
   getCachedAvatar,
@@ -10,14 +10,14 @@ import {
   clearCachedAvatar,
 } from "../utils/avatarCache";
 import { useUserContext } from "../contexts/UserContext";
+import { useCentralizedLogout } from "../hooks/useCentralizedLogout";
 
 const Header = () => {
-  const { user, isAuthenticated, logout, isLoading } = useAuth0();
-  const navigate = useNavigate();
+  const { user, isAuthenticated, isLoading } = useAuth0();
   const location = useLocation();
-
   const { businessName } = useUserContext();
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const centralizedLogout = useCentralizedLogout();
 
   // 1. Al cargar, busca la imagen cacheada
   useEffect(() => {
@@ -38,9 +38,9 @@ const Header = () => {
   useEffect(() => {
     if (!isLoading && !isAuthenticated && location.pathname !== "/auth") {
       clearCachedAvatar();
-      navigate("/auth");
+      centralizedLogout();
     }
-  }, [isLoading, isAuthenticated, location.pathname, navigate]);
+  }, [isLoading, isAuthenticated, location.pathname, centralizedLogout]);
 
   return (
     <header className="sticky top-0 z-48 w-full bg-white border-b border-gray-200 dark:bg-neutral-800 dark:border-neutral-700">
@@ -53,13 +53,7 @@ const Header = () => {
               businessName={businessName}
               email={user.email || ""}
               avatarUrl={avatarUrl}
-              onLogout={() =>
-                logout({
-                  logoutParams: {
-                    returnTo: `${window.location.origin}/auth`,
-                  },
-                })
-              }
+              onLogout={centralizedLogout}
             />
           )}
         </div>

@@ -19,6 +19,7 @@ import axios from "axios";
 import { SecurityContext } from "../contexts/SecurityContext";
 import { useToken } from "../hooks/useToken";
 import { useUserContext } from "../contexts/UserContext";
+import { useCentralizedLogout } from "../hooks/useCentralizedLogout";
 
 const navItems: NavItem[] = [
   { label: "Inicio", to: "/", icon: <House /> },
@@ -31,6 +32,7 @@ const Layout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth0();
   const { getTokenWithRetry } = useToken();
   const hasSentSession = useRef(false);
+  const centralizedLogout = useCentralizedLogout();
 
   const [showBusinessModal, setShowBusinessModal] = useState(false);
   const [newBusinessName, setNewBusinessName] = useState("");
@@ -64,12 +66,7 @@ const Layout: React.FC = () => {
           () => {
             navigate("/banned", { replace: true });
           },
-          () =>
-            logout({
-              logoutParams: {
-                returnTo: `${window.location.origin}/auth`,
-              },
-            })
+          centralizedLogout
         );
       } catch (err) {
         console.error("❌ Error en registerSession:", err);
@@ -80,11 +77,12 @@ const Layout: React.FC = () => {
   }, [isAuthenticated, user, navigate, logout]);
 
   const { refetchUserData, businessName } = useUserContext();
-   useEffect(() => {
-    const hasSeenModal = localStorage.getItem("hasSeenBusinessModal") === "true";
+  useEffect(() => {
+    const hasSeenModal =
+      sessionStorage.getItem("hasSeenBusinessModal") === "true";
     if (businessName === "Mi negocio" && !hasSeenModal) {
       setShowBusinessModal(true);
-      localStorage.setItem("hasSeenBusinessModal", "true");
+      sessionStorage.setItem("hasSeenBusinessModal", "true");
     }
   }, [businessName]);
 
@@ -105,21 +103,13 @@ const Layout: React.FC = () => {
 
   useEffect(() => {
     if (banCountdown === 0 && showBanModal) {
-      logout({
-        logoutParams: {
-          returnTo: `${window.location.origin}/auth`,
-        },
-      });
+      centralizedLogout();
     }
-  }, [banCountdown, showBanModal, logout]);
+  }, [banCountdown, showBanModal, centralizedLogout]);
 
   const handleBanReturn = () => {
     if (countdownRef.current) clearInterval(countdownRef.current);
-    logout({
-      logoutParams: {
-        returnTo: `${window.location.origin}/auth`,
-      },
-    });
+    centralizedLogout();
   };
 
   const handleUpdateBusiness = async () => {

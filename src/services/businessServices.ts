@@ -98,3 +98,24 @@ export const updateBusinessName = async (
   return await response.json();
 };
 
+export async function getBusinessFinances(token: string) {
+  const res = await fetch("/api/business/finances", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
+}
+
+export async function getBusinessProducts(token: string) {
+  const res = await fetch("/api/business/products", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
+}
+
+export async function getBusinessSales(token: string) {
+  const res = await fetch("/api/business/sales", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return await res.json();
+}
+
