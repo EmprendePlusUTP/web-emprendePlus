@@ -6,6 +6,9 @@ import { useForm } from "react-hook-form";
 import Modal from "../components/Modal";
 import { useAuth0 } from "@auth0/auth0-react";
 import {
+  getBusinessFinances,
+  getBusinessProducts,
+  getBusinessSales,
   getBusinessSettings,
   updateBusinessSettings,
 } from "../services/businessServices";
@@ -14,6 +17,17 @@ import InvoicePDFPreview from "../components/InvoicePDFPreview";
 import { generateDummyData } from "../services/dummyDataServices";
 import { useSecurity } from "../contexts/SecurityContext";
 import { useUserContext } from "../contexts/UserContext";
+import JSZip from "jszip";
+
+// Utilidad para convertir objeto a CSV
+function objectToCSV(data: Record<string, any>): string {
+  if (!Array.isArray(data)) data = [data];
+  const keys = Object.keys(data[0] || {});
+  const rows = data.map((row: any) =>
+    keys.map((k) => `"${row[k] ?? ""}"`).join(",")
+  );
+  return `${keys.join(",")}\n${rows.join("\n")}`;
+}
 
 type BusinessForm = {
   // 1. Identidad Básica
@@ -78,6 +92,119 @@ export default function BusinessSettings() {
     budgets: 0,
   });
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [showDownloadModal, setShowDownloadModal] = React.useState(false);
+  const [downloadSelections, setDownloadSelections] = React.useState({
+    finances: false,
+    products: false,
+    sales: false,
+  });
+  const [isDownloading, setIsDownloading] = React.useState(false);
+
+  // Simulación de funciones para obtener data de cada sección
+  async function getFinancesData(token: string) {
+    const data = await getBusinessFinances(token);
+    return Array.isArray(data) ? data : [];
+  }
+  async function getProductsData(token: string) {
+    const data = await getBusinessProducts(token);
+    return Array.isArray(data) ? data : [];
+  }
+  async function getSalesData(token: string) {
+    const data = await getBusinessSales(token);
+    return Array.isArray(data) ? data : [];
+  }
+
+  const handleDownloadCSV = async () => {
+    setShowDownloadModal(true);
+  };
+
+  const handleConfirmDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+          scope: "openid profile email offline_access",
+        },
+      });
+
+      const selected = Object.entries(downloadSelections)
+        .filter(([_, v]) => v)
+        .map(([k]) => k);
+
+      if (selected.length === 0) {
+        toast.error("Selecciona al menos una opción.");
+        setIsDownloading(false);
+        return;
+      }
+
+      if (selected.length === 1) {
+        const key = selected[0];
+        const fetchers: Record<string, (token: string) => Promise<any[]>> = {
+          finances: getFinancesData,
+          products: getProductsData,
+          sales: getSalesData,
+        };
+        const filenames: Record<string, string> = {
+          finances: "finanzas.csv",
+          products: "productos.csv",
+          sales: "ventas.csv",
+        };
+        const data = await fetchers[key](token);
+        const csv = objectToCSV(data);
+        const filename = filenames[key];
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        // Descargar ZIP con los CSV seleccionados
+        const zip = new JSZip();
+        const fetchers: Record<string, (token: string) => Promise<any[]>> = {
+          finances: getFinancesData,
+          products: getProductsData,
+          sales: getSalesData,
+        };
+        const filenames: Record<string, string> = {
+          finances: "finanzas.csv",
+          products: "productos.csv",
+          sales: "ventas.csv",
+        };
+        for (const key of selected) {
+          const data = await fetchers[key](token);
+          zip.file(filenames[key], objectToCSV(data));
+        }
+        // Generar nombre con fecha y hora
+        const now = new Date();
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+          now.getDate()
+        )}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        const zipName = `business_info_${dateStr}.zip`;
+
+        const content = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = zipName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      setShowDownloadModal(false);
+    } catch (err) {
+      toast.error("No se pudo descargar la data.");
+      console.error(err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const onSubmit = async (data: BusinessForm) => {
     try {
@@ -131,28 +258,29 @@ export default function BusinessSettings() {
           },
         });
 
-        const data = await getBusinessSettings(token);
+        const businessSettings = await getBusinessSettings(token);
 
         reset({
-          name: data.name || "",
-          tagline: data.tagline || "",
-          legalName: data.legal_name || "",
-          taxId: data.tax_id || "",
-          fiscalAddress: data.fiscal_address || "",
-          phone: data.phone || "",
-          email: data.email || "",
-          currency: data.currency || "USD",
-          invoicePrefix: data.invoice_prefix || "",
-          invoiceCounter: data.invoice_counter || 1,
-          paymentTermsAmount: data.payment_terms_amount || 30,
-          paymentTermsUnit: data.payment_terms_unit || "días",
-          bankDetails: data.bank_details || "",
-          taxRates: data.tax_rates || "",
+          name: businessSettings.name || "",
+          tagline: businessSettings.tagline || "",
+          legalName: businessSettings.legal_name || "",
+          taxId: businessSettings.tax_id || "",
+          fiscalAddress: businessSettings.fiscal_address || "",
+          phone: businessSettings.phone || "",
+          email: businessSettings.email || "",
+          currency: businessSettings.currency || "USD",
+          invoicePrefix: businessSettings.invoice_prefix || "",
+          invoiceCounter: businessSettings.invoice_counter || 1,
+          paymentTermsAmount: businessSettings.payment_terms_amount || 30,
+          paymentTermsUnit: businessSettings.payment_terms_unit || "días",
+          bankDetails: businessSettings.bank_details || "",
+          taxRates: businessSettings.tax_rates || "",
           timezone:
-            data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-          language: data.language || "es",
-          dateFormat: data.date_format || "dd/mm/aaaa",
-          numberFormat: data.number_format || "1.234,56",
+            businessSettings.timezone ||
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+          language: businessSettings.language || "es",
+          dateFormat: businessSettings.date_format || "dd/mm/aaaa",
+          numberFormat: businessSettings.number_format || "1.234,56",
           logo: undefined,
         });
       } catch (err) {
@@ -176,6 +304,91 @@ export default function BusinessSettings() {
       >
         Generar datos de prueba
       </button>
+      {/* Botón para descargar CSV/ZIP */}
+      <button
+        onClick={handleDownloadCSV}
+        className="ml-2 px-4 py-2 rounded bg-green-200 dark:bg-green-700 hover:bg-green-300 dark:hover:bg-green-600 transition"
+      >
+        Descargar datos (.csv/.zip)
+      </button>
+
+      {/* Modal de selección de descarga */}
+      {showDownloadModal && (
+        <Modal onClose={() => setShowDownloadModal(false)}>
+          <h2 className="text-xl font-bold mb-4">
+            Selecciona la data a descargar
+          </h2>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleConfirmDownload();
+            }}
+          >
+            <div className="flex flex-col gap-2">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={downloadSelections.finances}
+                  onChange={(e) =>
+                    setDownloadSelections((prev) => ({
+                      ...prev,
+                      finances: e.target.checked,
+                    }))
+                  }
+                  disabled={isDownloading}
+                />{" "}
+                Finanzas
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={downloadSelections.products}
+                  onChange={(e) =>
+                    setDownloadSelections((prev) => ({
+                      ...prev,
+                      products: e.target.checked,
+                    }))
+                  }
+                  disabled={isDownloading}
+                />{" "}
+                Productos
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={downloadSelections.sales}
+                  onChange={(e) =>
+                    setDownloadSelections((prev) => ({
+                      ...prev,
+                      sales: e.target.checked,
+                    }))
+                  }
+                  disabled={isDownloading}
+                />{" "}
+                Ventas
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 pt-4 border-t dark:border-neutral-600">
+              <button
+                type="button"
+                onClick={() => setShowDownloadModal(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600"
+                disabled={isDownloading}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                disabled={isDownloading}
+              >
+                {isDownloading ? "Descargando…" : "Descargar"}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* 1. Identidad Básica */}
@@ -484,7 +697,6 @@ export default function BusinessSettings() {
       {/* Modal de preview de factura */}
       {showPreview && (
         <Modal onClose={() => setShowPreview(false)}>
-          {/* Aquí renderizas un PDF o imagen de la plantilla */}
           <InvoicePDFPreview />
         </Modal>
       )}
