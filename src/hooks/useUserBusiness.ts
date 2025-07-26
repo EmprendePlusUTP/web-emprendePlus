@@ -1,5 +1,6 @@
 // src/hooks/useUserBusiness.ts
 import { useAuth0 } from "@auth0/auth0-react";
+import { useCentralizedLogout } from "./useCentralizedLogout";
 import { useCallback, useEffect, useState } from "react";
 import { retryWithLogoutFallback } from "../utils/retryWithLogout";
 
@@ -17,7 +18,8 @@ interface UserWithBusiness {
 }
 
 export const useUserWithBusiness = (enabled = true) => {
-  const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const centralizedLogout = useCentralizedLogout();
   const [userData, setUserData] = useState<UserWithBusiness>();
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -39,16 +41,11 @@ export const useUserWithBusiness = (enabled = true) => {
         if (!response.ok) throw new Error("Failed to fetch user profile");
         return await response.json();
       },
-      () =>
-        logout({
-          logoutParams: {
-            returnTo: `${window.location.origin}/auth`,
-          },
-        })
+      centralizedLogout
     );
 
     if (result) setUserData(result);
-  }, [API_URL, getAccessTokenSilently, logout, user?.sub]);
+  }, [API_URL, getAccessTokenSilently, user?.sub]);
 
   useEffect(() => {
     if (enabled && isAuthenticated && user) {

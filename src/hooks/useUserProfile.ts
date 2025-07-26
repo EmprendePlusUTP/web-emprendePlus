@@ -8,6 +8,7 @@ import {
 } from "../services/userProfileServices";
 import { useNavigate } from "react-router-dom";
 import { useToken } from "./useToken";
+import { useCentralizedLogout } from "./useCentralizedLogout";
 
 type UserProfile = {
   user: {
@@ -20,7 +21,8 @@ type UserProfile = {
 };
 
 export function useUserProfile() {
-  const { user, isAuthenticated, logout } = useAuth0();
+  const { user, isAuthenticated } = useAuth0();
+  const centralizedLogout = useCentralizedLogout();
   const [data, setData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const hasRegistered = useRef(false);
@@ -53,12 +55,7 @@ export function useUserProfile() {
           },
           token,
           () => navigate("/banned", { replace: true }),
-          () =>
-            logout({
-              logoutParams: {
-                returnTo: `${window.location.origin}/auth`,
-              },
-            })
+          centralizedLogout
         );
 
         const profile = await getUserProfile(token);
